@@ -2,7 +2,6 @@ services:
   - type: web
     runtime: node
     name: strategy-intel
-    rootDir: strategy-intel/app
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
