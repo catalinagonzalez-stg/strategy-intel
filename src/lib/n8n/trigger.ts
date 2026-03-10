@@ -1,19 +1,52 @@
 const N8N_BASE = process.env.N8N_WEBHOOK_BASE || '';
 
-export async function triggerGenerateNewsletter() {
-  const res = await fetch(`${N8N_BASE}/webhook/generate-newsletter`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ triggered_from: 'app', timestamp: new Date().toISOString() }),
-  });
-  return res.json();
+/**
+ * Generic n8n webhook trigger.
+ * Sends a POST request to the specified n8n webhook endpoint.
+ */
+export async function triggerN8n(webhook: string, payload: Record<string, unknown>) {
+    if (!N8N_BASE) {
+          console.warn('[n8n] N8N_WEBHOOK_BASE not set, skipping webhook:', webhook);
+          return { skipped: true, reason: 'N8N_WEBHOOK_BASE not configured' };
+    }
+
+  const url = `${N8N_BASE}/webhook/${webhook}`;
+
+  try {
+        const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+        });
+
+      if (!res.ok) {
+              const text = await res.text().catch(() => '');
+              console.error(`[n8n] Webhook ${webhook} failed: ${res.status} ${text.substring(0, 200)}`);
+              return { error: true, status: res.status, message: text.substring(0, 200) };
+      }
+
+      return await res.json().catch(() => ({ ok: true }));
+  } catch (error) {
+        console.error(`[n8n] Webhook ${webhook} error:`, error);
+        return { error: true, message: String(error) };
+  }
 }
 
+/**
+ * Trigger newsletter generation workflow
+ */
+export async function triggerGenerateNewsletter() {
+    return triggerN8n('generate-newsletter', {
+          triggered_from: 'app',
+          timestamp: new Date().toISOString(),
+    });
+}
+
+/**
+ * Trigger newsletter gatekeeping/validation workflow
+ */
 export async function triggerGatekeep(editionId: string) {
-  const res = await fetch(`${N8N_BASE}/webhook/gatekeep-newsletter`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ edition_id: editionId }),
-  });
-  return res.json();
+    return triggerN8n('gatekeep-newsletter', {
+          edition_id: editionId,
+    });
 }
