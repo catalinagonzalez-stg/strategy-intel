@@ -6,109 +6,137 @@ import type { NewsletterEdition, NewsletterItem } from '@/lib/supabase/types';
 import ReactMarkdown from 'react-markdown';
 
 export default function HistoryClient({ editions }: { editions: NewsletterEdition[] }) {
-  const [selected, setSelected] = useState<NewsletterEdition | null>(null);
-  const [items, setItems] = useState<NewsletterItem[]>([]);
-  const [search, setSearch] = useState('');
+    const [selected, setSelected] = useState<NewsletterEdition | null>(null);
+    const [items, setItems] = useState<NewsletterItem[]>([]);
+    const [search, setSearch] = useState('');
+    const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!selected) { setItems([]); return; }
-    fetch(`/api/newsletter-items?edition_id=${selected.id}`)
-      .then(r => r.json())
-      .then(data => setItems(data as NewsletterItem[]));
+        setMounted(true);
+  }, []);
+
+  useEffect(() => {
+        if (!selected) { setItems([]); return; }
+        fetch(`/api/newsletter-items?edition_id=${selected.id}`)
+          .then(r => r.json())
+          .then(data => setItems(data as NewsletterItem[]));
   }, [selected]);
 
   const filtered = search
-    ? editions.filter(e =>
-        (e.tema_semana || '').toLowerCase().includes(search.toLowerCase()) ||
-        (e.content_md || '').toLowerCase().includes(search.toLowerCase())
-      )
-    : editions;
+      ? editions.filter(e =>
+                (e.tema_semana || '').toLowerCase().includes(search.toLowerCase()) ||
+                (e.content_md || '').toLowerCase().includes(search.toLowerCase())
+                              )
+        : editions;
+
+  const formatDate = (dateStr: string) => {
+        if (!mounted) return dateStr.slice(0, 10);
+        try {
+                return new Date(dateStr).toLocaleDateString('es-CL', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                });
+        } catch {
+                return dateStr.slice(0, 10);
+        }
+  };
 
   return (
-    <div className="flex h-screen">
-      <div className="w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col overflow-hidden">
-        <div className="px-4 py-4 border-b border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Histórico</h2>
-          <input
-            className="w-full text-xs border rounded px-3 py-2 bg-white dark:bg-zinc-900 dark:border-zinc-700"
-            placeholder="Buscar en ediciones..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex-1 overflow-auto">
-          {filtered.map(e => (
-            <button
-              key={e.id}
-              onClick={() => setSelected(e)}
-              className={`w-full text-left px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 ${
-                selected?.id === e.id ? 'bg-blue-50 dark:bg-blue-950/20' : ''
-              }`}
-            >
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100">{e.edition_date}</span>
-                <Badge label={e.status} />
-              </div>
-              <p className="text-xs text-zinc-500 line-clamp-1">{e.tema_semana || 'Sin tema'}</p>
-            </button>
-          ))}
-          {filtered.length === 0 && (
-            <p className="text-xs text-zinc-400 text-center py-8">No hay ediciones</p>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto">
-        {selected ? (
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{selected.edition_date}</h3>
-              <Badge label={selected.status} />
-              {selected.sent_at && (
-                <span className="text-xs text-zinc-500">Enviado: {new Date(selected.sent_at).toLocaleString('es')}</span>
-              )}
-            </div>
-            {selected.tema_semana && (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">Tema: {selected.tema_semana}</p>
-            )}
-
-            {selected.content_md && (
-              <div className="prose prose-sm dark:prose-invert max-w-none mb-8">
-                <ReactMarkdown>{selected.content_md}</ReactMarkdown>
-              </div>
-            )}
-
-            {items.length > 0 && (
-              <div className="mt-8">
-                <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Items con fuentes</h4>
-                <div className="space-y-2">
-                  {items.map(item => (
-                    <div key={item.id} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge label={item.section || '—'} variant="low" />
-                        {item.low_evidence && <Badge label="low evidence" variant="med" />}
-                      </div>
-                      <p className="text-xs text-zinc-700 dark:text-zinc-300">{item.editorial_text}</p>
-                      <p className="text-xs text-zinc-500 mt-1">
-                        <a href={item.supporting_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                          {item.supporting_source}
-                        </a>
-                        {' — '}
-                        {item.supporting_published_at ? new Date(item.supporting_published_at).toLocaleDateString('es') : '—'}
-                      </p>
-                      <p className="text-xs italic text-zinc-400 mt-0.5">"{item.supporting_quote}"</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-full text-zinc-400 text-sm">
-            Selecciona una edición para ver el detalle
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        <div className="flex h-screen">
+              <div className="w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
+                      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+                                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">Histórico</h2>h2>
+                                <input
+                                              className="w-full text-sm border rounded px-3 py-2 bg-white dark:bg-zinc-900 dark:border-zinc-700"
+                                              placeholder="Buscar edición..."
+                                              value={search}
+                                              onChange={e => setSearch(e.target.value)}
+                                            />
+                      </div>div>
+                      <div className="flex-1 overflow-auto">
+                        {filtered.map(e => (
+                      <button
+                                      key={e.id}
+                                      onClick={() => setSelected(e)}
+                                      className={`w-full text-left px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors ${
+                                                        selected?.id === e.id ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+                                      }`}
+                                    >
+                                    <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs text-zinc-500">
+                                                      {formatDate(e.week_label || e.created_at)}
+                                                    </span>span>
+                                                    <Badge label={e.status} />
+                                    </div>div>
+                                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200 line-clamp-1">
+                                      {e.tema_semana || 'Sin tema'}
+                                    </p>p>
+                      </button>button>
+                    ))}
+                        {filtered.length === 0 && (
+                      <p className="text-sm text-zinc-400 text-center py-8">No hay ediciones</p>p>
+                                )}
+                      </div>div>
+              </div>div>
+        
+              <div className="flex-1 overflow-auto">
+                {selected ? (
+                    <div className="p-6 max-w-3xl">
+                                <div className="flex items-center justify-between mb-4">
+                                              <div>
+                                                              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                                                                {selected.tema_semana || 'Sin tema'}
+                                                              </h3>h3>
+                                                              <p className="text-xs text-zinc-500 mt-1">
+                                                                {formatDate(selected.week_label || selected.created_at)} · <Badge label={selected.status} />
+                                                              </p>p>
+                                              </div>div>
+                                </div>div>
+                    
+                      {selected.highlights && selected.highlights.length > 0 && (
+                                    <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                                    <p className="text-xs font-medium text-amber-800 dark:text-amber-400 mb-2">Highlights</p>p>
+                                                    <ul className="space-y-1">
+                                                      {selected.highlights.map((h: string, i: number) => (
+                                                          <li key={i} className="text-sm text-amber-900 dark:text-amber-300">• {h}</li>li>
+                                                        ))}
+                                                    </ul>ul>
+                                    </div>div>
+                                )}
+                    
+                      {items.length > 0 && (
+                                    <div className="mb-6">
+                                                    <p className="text-xs font-medium text-zinc-500 mb-2">Items ({items.length})</p>p>
+                                                    <div className="space-y-2">
+                                                      {items.map(item => (
+                                                          <div key={item.id} className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+                                                                                <div className="flex items-center justify-between mb-1">
+                                                                                                        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{item.section}</span>span>
+                                                                                                        <span className="text-xs text-zinc-500">Orden: {item.order_in_section}</span>span>
+                                                                                  </div>div>
+                                                                                <p className="text-sm text-zinc-900 dark:text-zinc-200">{item.headline}</p>p>
+                                                            {item.body_md && (
+                                                                                    <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.body_md}</p>p>
+                                                                                )}
+                                                          </div>div>
+                                                        ))}
+                                                    </div>div>
+                                    </div>div>
+                                )}
+                    
+                      {selected.content_md && (
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                    <ReactMarkdown>{selected.content_md}</ReactMarkdown>ReactMarkdown>
+                                    </div>div>
+                                )}
+                    </div>div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-zinc-400">
+                                <p className="text-sm">Selecciona una edición para ver el detalle</p>p>
+                    </div>div>
+                      )}
+              </div>div>
+        </div>div>
+      );
+}</div>
