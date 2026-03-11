@@ -94,9 +94,46 @@ export default function HistoryClient({ editions }: { editions: NewsletterEditio
               </div>
             </div>
 
-            {(selected as any).highlights && (selected as any).highlights.length > 0 && (
-              <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                <p className="text-xs font-medium text-amber-800 dark:text-amber-400 mb-2">Highlights</p>
-                <ul className="space-y-1">
-                  {(selected as any).highlights.map((h: string, i: number) => (
+            {selected.content_md && (
+              <div className="prose prose-sm dark:prose-invert max-w-none mb-6">
+                <ReactMarkdown>{selected.content_md}</ReactMarkdown>
+              </div>
+            )}
 
+            {items.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Artículos</h4>
+                {items.map(item => (
+                  <div key={item.id} className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          {item.editorial_text || 'Sin título'}
+                        </p>
+                        {item.supporting_url && (
+                          <a
+                            href={item.supporting_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1 inline-block"
+                          >
+                            {item.supporting_source || 'Ver fuente'}
+                          </a>
+                        )}
+                      </div>
+                      <Badge label={item.section} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-zinc-400">
+            <p>Selecciona una edición para ver su contenido</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
