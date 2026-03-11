@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Badge from '@/components/shared/Badge';
 import type { Article, Classification, TopicEnum, Region } from '@/lib/supabase/types';
-import { createClient } from '@/lib/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -22,7 +21,6 @@ export default function FeedClient({ articles }: { articles: ArticleRow[] }) {
   const searchParams = useSearchParams();
   const [selected, setSelected] = useState<ArticleRow | null>(null);
   const [noteText, setNoteText] = useState('');
-  const supabase = createClient();
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -35,7 +33,11 @@ export default function FeedClient({ articles }: { articles: ArticleRow[] }) {
   };
 
   const updateArticle = async (id: string, updates: Partial<Article>) => {
-    await supabase.from('articles').update(updates).eq('id', id);
+    await fetch('/api/promote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleId: id, ...updates }),
+    });
     router.refresh();
   };
 
