@@ -121,7 +121,7 @@ export default function HistoryClient({ editions }: { editions: NewsletterEditio
                           </a>
                         )}
                       </div>
-                      <Badge label={item.section} />
+                      <Badge label={item.section || 'general'} />
                     </div>
                   </div>
                 ))}
