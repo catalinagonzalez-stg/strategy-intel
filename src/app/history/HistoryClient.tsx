@@ -65,7 +65,7 @@ export default function HistoryClient({ editions }: { editions: NewsletterEditio
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-zinc-500">
-                  {formatDate(e.week_label || e.created_at)}
+                  {formatDate(e.edition_date || e.created_at)}
                 </span>
                 <Badge label={e.status} />
               </div>
@@ -89,54 +89,14 @@ export default function HistoryClient({ editions }: { editions: NewsletterEditio
                   {selected.tema_semana || 'Sin tema'}
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">
-                  {formatDate(selected.week_label || selected.created_at)} · <Badge label={selected.status} />
+                  {formatDate(selected.edition_date || selected.created_at)} · <Badge label={selected.status} />
                 </p>
               </div>
             </div>
 
-            {selected.highlights && selected.highlights.length > 0 && (
+            {(selected as any).highlights && (selected as any).highlights.length > 0 && (
               <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
                 <p className="text-xs font-medium text-amber-800 dark:text-amber-400 mb-2">Highlights</p>
                 <ul className="space-y-1">
-                  {selected.highlights.map((h: string, i: number) => (
-                    <li key={i} className="text-sm text-amber-900 dark:text-amber-300">• {h}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                  {(selected as any).highlights.map((h: string, i: number) => (
 
-            {items.length > 0 && (
-              <div className="mb-6">
-                <p className="text-xs font-medium text-zinc-500 mb-2">Items ({items.length})</p>
-                <div className="space-y-2">
-                  {items.map(item => (
-                    <div key={item.id} className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{item.section}</span>
-                        <span className="text-xs text-zinc-500">Orden: {item.order_in_section}</span>
-                      </div>
-                      <p className="text-sm text-zinc-900 dark:text-zinc-200">{item.headline}</p>
-                      {item.body_md && (
-                        <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.body_md}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {selected.content_md && (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <ReactMarkdown>{selected.content_md}</ReactMarkdown>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-full text-zinc-400">
-            <p className="text-sm">Selecciona una edición para ver el detalle</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
