@@ -69,7 +69,7 @@ export async function POST() {
                   if (s.source) sourceDomains.add(s.source);
           }
 
-      const res = await fetch(`${N8N_BASE}/webhook/generate-newsletter`, {
+      const res = await fetch(`${N8N_BASE}/webhook/curate-weekly`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
