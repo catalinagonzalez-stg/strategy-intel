@@ -290,4 +290,4 @@ export default function CurationClient({ edition, items, signals, unassignedSign
                     </div>
               </div>
             );
-}</></div>
+}
