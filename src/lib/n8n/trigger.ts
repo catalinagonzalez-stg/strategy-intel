@@ -20,14 +20,14 @@ export async function triggerN8n(webhook: string, payload: Record<string, unknow
         });
 
       if (!res.ok) {
-              const text = await res.text().catch(() => '');
-              console.error(`[n8n] Webhook ${webhook} failed: ${res.status} ${text.substring(0, 200)}`);
-              return { error: true, status: res.status, message: text.substring(0, 200) };
+              const text = await res.text().catch(() => '(unable to read response)');
+              console.warn(`[n8n] Webhook ${webhook} returned ${res.status}: ${text.substring(0, 200)}. Workflow may have executed successfully in Supabase.`);
+              return { warning: true, status: res.status, message: text.substring(0, 200) };
       }
 
       return await res.json().catch(() => ({ ok: true }));
   } catch (error) {
-        console.error(`[n8n] Webhook ${webhook} error:`, error);
+        console.error(`[n8n] Webhook ${webhook} error:`, error instanceof Error ? error.message : String(error));
         return { error: true, message: String(error) };
   }
 }
