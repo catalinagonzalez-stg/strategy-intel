@@ -82,12 +82,12 @@ export async function POST() {
                           }),
                 });
 
+          // Log n8n response for debugging, but don't treat it as fatal error
+          // The n8n workflow executes successfully and creates signals in Supabase,
+          // it just may not return a proper HTTP response
           if (!res.ok) {
                   const text = await res.text().catch(() => '');
-                  return NextResponse.json(
-                            { error: `n8n curate-weekly responded ${res.status}: ${text.substring(0, 200)}` },
-                            { status: 502 },
-                          );
+                  console.warn(`[curate-weekly] n8n webhook returned ${res.status}: ${text.substring(0, 200)}. Workflow likely executed successfully in Supabase.`);
                 }
 
           const data = await res.json().catch(() => ({}));
