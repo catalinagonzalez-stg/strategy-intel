@@ -1,4 +1,4 @@
-import { callClaude } from './client';
+import { callLLM } from './client';
 import { getFintocContextPrompt, FINTOC_CONTEXT } from '@/lib/fintoc-context';
 import type { TopicEnum, Region, Bucket, Confidence } from '@/lib/supabase/types';
 
@@ -82,7 +82,7 @@ URL: ${article.url || 'N/A'}
 Publicado hace: ${publishedDaysAgo} dias
 Contenido: ${content.substring(0, 3000)}`;
 
-  const response = await callClaude({
+  const response = await callLLM({
     system: SYSTEM_PROMPT,
     userMessage,
     maxTokens: 1024,
@@ -106,7 +106,7 @@ Contenido: ${content.substring(0, 3000)}`;
       is_weekly_eligible: Boolean(parsed.is_weekly_eligible),
     };
   } catch (e) {
-    console.error('[classify] Failed to parse Claude response:', response.substring(0, 200));
+    console.error('[classify] Failed to parse LLM response:', response.substring(0, 200));
     // Return a low-relevance default
     return {
       relevance_score: 0,
