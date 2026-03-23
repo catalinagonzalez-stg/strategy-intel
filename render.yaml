@@ -11,7 +11,7 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: N8N_WEBHOOK_BASE
+      - key: ANTHROPIC_API_KEY
         sync: false
       - key: SLACK_BOT_TOKEN
         sync: false
