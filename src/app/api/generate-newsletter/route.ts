@@ -1,125 +1,144 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { getFintocContextPrompt, FINTOC_CONTEXT } from '@/lib/fintoc-context';
-
-const N8N_BASE = process.env.N8N_WEBHOOK_BASE || 'https://fintoc.app.n8n.cloud';
+import { generateNewsletter, validateNewsletter } from '@/lib/ai/newsletter';
 
 /**
  * POST /api/generate-newsletter
  *
- * Two-step process:
- * 1. Trigger Curate Weekly to insert fresh signals into Supabase
- * 2. Trigger Generate Newsletter to build the edition from those signals
+ * Native newsletter generation pipeline (replaces n8n workflow):
+ * 1. Creates a draft edition in newsletter_editions
+ * 2. Fetches unassigned signals (where edition_id is null)
+ * 3. Generates newsletter content using Claude AI
+ * 4. Inserts newsletter_items
+ * 5. Updates the edition with content and validation
+ * 6. Updates signals with the edition_id
  */
 export async function POST() {
-    try {
-          const supabase = createServiceClient();
-          const oneWeekAgo = new Date();
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  try {
+    const supabase = createServiceClient();
 
-      // Gather promoted signals for the curation step
-      const { data: signals } = await supabase
-            .from('articles')
-            .select('id, title, url, source_domain, content_snippet, published_at, notes, pinned, classifications(*)')
-            .eq('status', 'promoted')
-            .gte('ingested_at', oneWeekAgo.toISOString())
-            .order('published_at', { ascending: false });
+    // 1. Fetch unassigned signals
+    const { data: signals, error: signalsErr } = await supabase
+      .from('signals')
+      .select('*')
+      .is('edition_id', null)
+      .order('created_at', { ascending: false });
 
-      const { data: pinned } = await supabase
-            .from('articles')
-            .select('id, title, url, source_domain, content_snippet, published_at, notes, pinned, classifications(*)')
-            .eq('pinned', true)
-            .eq('status', 'promoted');
-
-      const allSignals = [...(signals || [])];
-          for (const p of (pinned || [])) {
-                  if (!allSignals.find(s => s.id === p.id)) {
-                            allSignals.push(p);
-                  }
-          }
-
-      const enrichedSignals = allSignals.map(signal => {
-              const topClass = (signal.classifications as any[])?.[0];
-              return {
-                        id: signal.id,
-                        title: signal.title,
-                        url: signal.url,
-                        source: signal.source_domain,
-                        snippet: signal.content_snippet,
-                        published_at: signal.published_at,
-                        notes: signal.notes,
-                        pinned: signal.pinned,
-                        region: topClass?.region || 'global',
-                        topics: topClass?.topics || [],
-                        relevance_score: topClass?.relevance_score || 0,
-                        why_relevant: topClass?.why_relevant_to_fintoc || '',
-                        evidence_quote: topClass?.evidence_quote || '',
-              };
-      });
-
-      const regionCounts: Record<string, number> = {};
-          const sourceDomains = new Set<string>();
-          for (const s of enrichedSignals) {
-                  regionCounts[s.region] = (regionCounts[s.region] || 0) + 1;
-                  if (s.source) sourceDomains.add(s.source);
-          }
-
-      // Step 1: Trigger Curate Weekly to insert fresh signals
-      // Note: This step's HTTP response may fail, but the workflow executes successfully in Supabase
-      const curateRes = await fetch(`${N8N_BASE}/webhook/curate-weekly`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                        triggered_from: 'app',
-                        timestamp: new Date().toISOString(),
-                        signals: enrichedSignals,
-                        fintoc_context: getFintocContextPrompt(),
-                        newsletter_config: FINTOC_CONTEXT.newsletter,
-                        metadata: {
-                                    total_signals: enrichedSignals.length,
-                                    region_distribution: regionCounts,
-                                    unique_sources: sourceDomains.size,
-                        },
-              }),
-      }).catch((e) => {
-              console.warn('[generate-newsletter] curate-weekly fetch error:', e);
-              return null;
-      });
-
-      // Log any HTTP errors from curate-weekly, but don't block
-      if (curateRes && !curateRes.ok) {
-              const text = await curateRes.text().catch(() => '');
-              console.warn(`[generate-newsletter] curate-weekly returned ${curateRes.status}: ${text.substring(0, 200)}. Continuing to generate-newsletter...`);
-      }
-
-      // Wait for curate-weekly to finish inserting signals
-      await new Promise(resolve => setTimeout(resolve, 8000));
-
-      // Step 2: Trigger Generate Newsletter to build the edition
-      // Note: Like curate-weekly, this may return HTTP 500 but the workflow executes successfully
-      const res = await fetch(`${N8N_BASE}/webhook/generate-newsletter`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                        triggered_from: 'app',
-                        timestamp: new Date().toISOString(),
-              }),
-      }).catch((e) => {
-              console.warn('[generate-newsletter] generate-newsletter fetch error:', e);
-              return null;
-      });
-
-      // Log any HTTP errors from generate-newsletter, but treat as success
-      // The workflow likely executed and created data in Supabase
-      if (res && !res.ok) {
-              const text = await res.text().catch(() => '');
-              console.warn(`[generate-newsletter] generate-newsletter webhook returned ${res.status}: ${text.substring(0, 200)}. Workflow likely executed successfully.`);
-      }
-
-      const data = await res?.json?.().catch(() => ({})) || {};
-
-      return NextResponse.json({ ok: true, data, signals_sent: enrichedSignals.length });
-    } catch (error) {
-          return NextResponse.json({ error: String(error) }, { status: 500 });
+    if (signalsErr) {
+      return NextResponse.json({ error: `Failed to fetch signals: ${signalsErr.message}` }, { status: 500 });
     }
+
+    if (!signals || signals.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        message: 'No unassigned signals to build newsletter from. Run "Curate weekly" first.',
+        edition_id: null,
+      });
+    }
+
+    console.log(`[generate-newsletter] Found ${signals.length} unassigned signals`);
+
+    // 2. Get next edition number
+    const { data: lastEdition } = await supabase
+      .from('newsletter_editions')
+      .select('edition_number')
+      .order('edition_number', { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextNumber = (lastEdition?.edition_number || 0) + 1;
+
+    // 3. Create draft edition
+    const { data: edition, error: editionErr } = await supabase
+      .from('newsletter_editions')
+      .insert({
+        edition_date: new Date().toISOString().split('T')[0],
+        edition_number: nextNumber,
+        status: 'draft',
+      })
+      .select('id')
+      .single();
+
+    if (editionErr || !edition) {
+      return NextResponse.json({ error: `Failed to create edition: ${editionErr?.message}` }, { status: 500 });
+    }
+
+    console.log(`[generate-newsletter] Created draft edition #${nextNumber} (${edition.id})`);
+
+    // 4. Generate newsletter content with Claude
+    const newsletterContent = await generateNewsletter(signals);
+
+    // 5. Validate
+    const validation = validateNewsletter(newsletterContent, signals.length);
+
+    // 6. Insert newsletter_items for section assignments
+    if (newsletterContent.section_assignments.length > 0) {
+      const items = newsletterContent.section_assignments.map(sa => {
+        const signal = signals.find((s: any) => s.id === sa.signal_id);
+        return {
+          edition_id: edition.id,
+          signal_id: sa.signal_id || null,
+          article_id: signal?.article_id || null,
+          section: sa.section,
+          sort_order: sa.sort_order,
+          supporting_url: signal?.supporting_url || '',
+          supporting_source: signal?.supporting_source || '',
+          supporting_published_at: signal?.supporting_published_at || new Date().toISOString(),
+          supporting_quote: signal?.supporting_quote || '',
+          low_evidence: signal?.low_evidence || false,
+        };
+      });
+
+      const { error: itemsErr } = await supabase
+        .from('newsletter_items')
+        .insert(items);
+
+      if (itemsErr) {
+        console.warn(`[generate-newsletter] Error inserting newsletter_items: ${itemsErr.message}`);
+      }
+    }
+
+    // 7. Update edition with content
+    const finalStatus = validation.valid ? 'validated' : 'draft';
+    const { error: updateErr } = await supabase
+      .from('newsletter_editions')
+      .update({
+        tema_semana: newsletterContent.tema_semana,
+        content_md: newsletterContent.content_md,
+        content_slack: newsletterContent.content_slack,
+        validation_result: validation,
+        status: finalStatus,
+      })
+      .eq('id', edition.id);
+
+    if (updateErr) {
+      console.error(`[generate-newsletter] Error updating edition: ${updateErr.message}`);
+    }
+
+    // 8. Update signals with edition_id
+    const signalIds = signals.map((s: any) => s.id);
+    const { error: signalUpdateErr } = await supabase
+      .from('signals')
+      .update({ edition_id: edition.id })
+      .in('id', signalIds);
+
+    if (signalUpdateErr) {
+      console.warn(`[generate-newsletter] Error updating signal edition_ids: ${signalUpdateErr.message}`);
+    }
+
+    console.log(`[generate-newsletter] Edition #${nextNumber} generated. Status: ${finalStatus}. Validation: ${validation.valid ? 'PASS' : 'FAIL'}`);
+
+    return NextResponse.json({
+      ok: true,
+      edition_id: edition.id,
+      edition_number: nextNumber,
+      status: finalStatus,
+      tema_semana: newsletterContent.tema_semana,
+      signals_count: signals.length,
+      validation,
+    });
+  } catch (error) {
+    console.error('[generate-newsletter] Error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
 }
