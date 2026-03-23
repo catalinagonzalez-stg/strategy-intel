@@ -1,4 +1,4 @@
-import { callClaude } from './client';
+import { callLLM } from './client';
 import { getFintocContextPrompt } from '@/lib/fintoc-context';
 import type { SignalType, ImpactLevel } from '@/lib/supabase/types';
 
@@ -65,14 +65,14 @@ Por que es relevante: ${article.why_relevant || 'N/A'}
 Notas editoriales: ${article.notes || 'Ninguna'}
 Contenido: ${(article.content_snippet || '').substring(0, 2000)}`;
 
-  const response = await callClaude({
+  const response = await callLLM({
     system: SYSTEM_PROMPT,
     userMessage,
     maxTokens: 1024,
   });
 
   try {
-    const cleaned = response.replace(/\`\`\`json\n?/g, '').replace(/\`\`\`\n?/g, '').trim();
+    const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
     const validTypes: SignalType[] = ['regulation', 'competition', 'product', 'infra', 'funding', 'social'];
@@ -88,7 +88,7 @@ Contenido: ${(article.content_snippet || '').substring(0, 2000)}`;
       low_evidence: Boolean(parsed.low_evidence),
     };
   } catch (e) {
-    console.error('[signals] Failed to parse Claude response:', response.substring(0, 200));
+    console.error('[signals] Failed to parse LLM response:', response.substring(0, 200));
     return {
       signal_type: 'infra',
       impact_level: 'low',
