@@ -1,4 +1,4 @@
-import { callClaude } from './client';
+import { callLLM } from './client';
 import { getFintocContextPrompt, FINTOC_CONTEXT } from '@/lib/fintoc-context';
 
 interface SignalForNewsletter {
@@ -117,7 +117,7 @@ Recuerda:
 - Maximo 30% contenido global
 - El content_slack debe ser una version compacta (max 3800 chars) del content_md`;
 
-  const response = await callClaude({
+  const response = await callLLM({
     system: SYSTEM_PROMPT,
     userMessage,
     maxTokens: 8192,
@@ -140,7 +140,7 @@ Recuerda:
         : [],
     };
   } catch (e) {
-    console.error('[newsletter] Failed to parse Claude response:', response.substring(0, 300));
+    console.error('[newsletter] Failed to parse LLM response:', response.substring(0, 300));
     // Try to extract content even if JSON parsing failed
     // Claude might have returned just the markdown directly
     return {
