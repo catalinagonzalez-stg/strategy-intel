@@ -72,29 +72,76 @@ export async function POST() {
     const validation = validateNewsletter(newsletterContent, signals.length);
 
     // 6. Insert newsletter_items for section assignments
+    // The LLM may return signal_ids that don't exactly match (truncated, etc.)
+    // So we match by finding the closest signal, and skip unmatched assignments
     if (newsletterContent.section_assignments.length > 0) {
-      const items = newsletterContent.section_assignments.map(sa => {
-        const signal = signals.find((s: any) => s.id === sa.signal_id);
-        return {
+      const items = newsletterContent.section_assignments
+        .map(sa => {
+          // Try exact match first, then prefix match (LLM sometimes truncates UUIDs)
+          let signal = signals.find((s: any) => s.id === sa.signal_id);
+          if (!signal) {
+            signal = signals.find((s: any) => s.id.startsWith(sa.signal_id) || sa.signal_id.startsWith(s.id));
+          }
+          if (!signal) {
+            console.warn(`[generate-newsletter] No matching signal for assignment: ${sa.signal_id}`);
+            return null;
+          }
+          return {
+            edition_id: edition.id,
+            signal_id: signal.id, // Use the actual signal ID, not the LLM's version
+            article_id: signal.article_id || null,
+            section: sa.section,
+            sort_order: sa.sort_order,
+            editorial_text: signal.summary_factual + (signal.fintoc_implication ? ` — ${signal.fintoc_implication}` : ''),
+            supporting_url: signal.supporting_url || '',
+            supporting_source: signal.supporting_source || '',
+            supporting_published_at: signal.supporting_published_at || new Date().toISOString(),
+            supporting_quote: signal.supporting_quote || '',
+            low_evidence: signal.low_evidence || false,
+          };
+        })
+        .filter(Boolean); // Remove null entries from unmatched signals
+
+      if (items.length > 0) {
+        const { error: itemsErr } = await supabase
+          .from('newsletter_items')
+          .insert(items);
+
+        if (itemsErr) {
+          console.warn(`[generate-newsletter] Error inserting newsletter_items: ${itemsErr.message}`);
+        } else {
+          console.log(`[generate-newsletter] Inserted ${items.length} newsletter_items`);
+        }
+      }
+
+      // Also insert items for signals NOT assigned by the LLM (to ensure all signals appear)
+      const assignedSignalIds = new Set(items.map((it: any) => it?.signal_id));
+      const unassignedItems = signals
+        .filter((s: any) => !assignedSignalIds.has(s.id))
+        .map((s: any, idx: number) => ({
           edition_id: edition.id,
-          signal_id: sa.signal_id || null,
-          article_id: signal?.article_id || null,
-          section: sa.section,
-          sort_order: sa.sort_order,
-          supporting_url: signal?.supporting_url || '',
-          supporting_source: signal?.supporting_source || '',
-          supporting_published_at: signal?.supporting_published_at || new Date().toISOString(),
-          supporting_quote: signal?.supporting_quote || '',
-          low_evidence: signal?.low_evidence || false,
-        };
-      });
+          signal_id: s.id,
+          article_id: s.article_id || null,
+          section: s.signal_type === 'competition' ? 'radar' : 'tendencia',
+          sort_order: 100 + idx,
+          editorial_text: s.summary_factual + (s.fintoc_implication ? ` — ${s.fintoc_implication}` : ''),
+          supporting_url: s.supporting_url || '',
+          supporting_source: s.supporting_source || '',
+          supporting_published_at: s.supporting_published_at || new Date().toISOString(),
+          supporting_quote: s.supporting_quote || '',
+          low_evidence: s.low_evidence || false,
+        }));
 
-      const { error: itemsErr } = await supabase
-        .from('newsletter_items')
-        .insert(items);
+      if (unassignedItems.length > 0) {
+        const { error: unassignedErr } = await supabase
+          .from('newsletter_items')
+          .insert(unassignedItems);
 
-      if (itemsErr) {
-        console.warn(`[generate-newsletter] Error inserting newsletter_items: ${itemsErr.message}`);
+        if (unassignedErr) {
+          console.warn(`[generate-newsletter] Error inserting unassigned items: ${unassignedErr.message}`);
+        } else {
+          console.log(`[generate-newsletter] Inserted ${unassignedItems.length} unassigned signal items`);
+        }
       }
     }
 
