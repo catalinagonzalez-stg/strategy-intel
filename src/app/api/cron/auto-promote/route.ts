@@ -15,6 +15,7 @@ import { FINTOC_CONTEXT } from '@/lib/fintoc-context';
  * - relevance_score >= 9 for global articles
  * - Article must be in 'new' status
  * - Article must have is_weekly_eligible = true
+ * - Article must be published within the last 10 days
  */
 export async function POST(request: Request) {
     const authHeader = request.headers.get('authorization');
@@ -29,10 +30,15 @@ export async function POST(request: Request) {
         const primaryRegions = FINTOC_CONTEXT.regions_by_priority.primary;
         const secondaryRegions = FINTOC_CONTEXT.regions_by_priority.secondary;
 
+      // Only evaluate articles published in the last 10 days to ensure freshness
+      const freshnessCutoff = new Date();
+      freshnessCutoff.setDate(freshnessCutoff.getDate() - 10);
+
       const { data: articles } = await supabase
           .from('articles')
-          .select('id, title, status, classifications(*)')
+          .select('id, title, status, published_at, classifications(*)')
           .eq('status', 'new')
+          .gte('published_at', freshnessCutoff.toISOString())
           .order('ingested_at', { ascending: false })
           .limit(200);
 
