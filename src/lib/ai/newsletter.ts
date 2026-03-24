@@ -113,8 +113,10 @@ ${signalsSummary}
 
 Recuerda:
 - Priorizar signals con impact_level "high"
+- Priorizar signals MAS RECIENTES (publicados esta semana). Si una signal tiene fecha de publicacion mayor a 10 dias, marcala como contexto pero NO la pongas como noticia principal
 - Asegurarte de cubrir regiones CL y MX
 - Maximo 30% contenido global
+- En "Que paso" solo incluir eventos de los ultimos 7 dias. Si no hay suficientes, es mejor un newsletter corto que uno con noticias viejas
 - El content_slack debe ser una version compacta (max 3800 chars) del content_md`;
 
   const response = await callLLM({
