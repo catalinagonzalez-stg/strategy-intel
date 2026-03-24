@@ -6,7 +6,7 @@ import { generateSignal } from '@/lib/ai/signals';
  * POST /api/curate-weekly
  *
  * Native curate-weekly pipeline (replaces n8n workflow):
- * 1. Fetches promoted articles from the last 30 days (+ pinned)
+ * 1. Fetches promoted articles published in the last 10 days (+ pinned)
  * 2. Enriches them with classification data
  * 3. Generates strategic signals using Claude AI
  * 4. Inserts signals into Supabase
@@ -15,14 +15,14 @@ export async function POST() {
   try {
     const supabase = createServiceClient();
     const lookbackDate = new Date();
-    lookbackDate.setDate(lookbackDate.getDate() - 30);
+    lookbackDate.setDate(lookbackDate.getDate() - 10); // 10 days to catch weekend lag
 
-    // Gather promoted articles from last 30 days
+    // Gather promoted articles published in the last 10 days
     const { data: recentArticles } = await supabase
       .from('articles')
       .select('id, title, url, source_domain, content_snippet, published_at, notes, pinned, classifications(*)')
       .eq('status', 'promoted')
-      .gte('ingested_at', lookbackDate.toISOString())
+      .gte('published_at', lookbackDate.toISOString())
       .order('published_at', { ascending: false });
 
     // Also include pinned articles regardless of date
