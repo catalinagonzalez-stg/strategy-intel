@@ -1,0 +1,36 @@
+name: Weekly Newsletter Pipeline
+
+on:
+  schedule:
+    # Every Monday at 10:00 UTC = 7:00 AM CLT (Chile, UTC-3)
+    - cron: '0 10 * * 1'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger full newsletter pipeline
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          echo "Triggering full pipeline at $(date -u)"
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            https://strategy-intel.onrender.com/api/cron/full-pipeline)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Pipeline failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Pipeline completed successfully"
