@@ -26,7 +26,7 @@ export interface NewsletterContent {
 }
 
 const SECTIONS = FINTOC_CONTEXT.newsletter.sections
-  .map(s => `- "${s.id}": ${s.name} — ${s.description}`)
+  .map(s => `- "${s.id}": ${s.name} \u2014 ${s.description}`)
   .join('\n');
 
 const SYSTEM_PROMPT = `Eres el editor del newsletter "Strategy Intel Weekly" de Fintoc.
@@ -59,12 +59,12 @@ Responde UNICAMENTE con JSON valido (sin markdown, sin backticks):
 
 FORMATO del content_md:
 
-# Strategy Intel Weekly — [Tema: una tesis, no un resumen]
+# Strategy Intel Weekly \u2014 [Tema: una tesis, no un resumen]
 _Semana del [fecha]_
 
-[SI HAY ALERTA URGENTE: 2-3 lineas marcadas con 🚨 sobre regulacion o movimiento critico de competidor]
+[SI HAY ALERTA URGENTE: 2-3 lineas marcadas con \ud83d\udea8 sobre regulacion o movimiento critico de competidor]
 
-## [Titulo del Tema 1 — con angulo, no descriptivo]
+## [Titulo del Tema 1 \u2014 con angulo, no descriptivo]
 **Que paso:** [Parrafo corto con datos duros: montos, porcentajes, fechas, nombres]
 **Por que importa:** [Interpretacion para Fintoc. Toma posicion. "Esto significa que..." "Esto abre la puerta a..." "El riesgo es que..."]
 **Pregunta para el equipo:** [Pregunta estrategica especifica que obligue a pensar]
@@ -73,11 +73,11 @@ _Fuente: [link]_
 ## [Titulo del Tema 2]
 [Mismo formato]
 
-## [Titulo del Tema 3 — solo si realmente aporta]
+## [Titulo del Tema 3 \u2014 solo si realmente aporta]
 [Mismo formato]
 
 ---
-_Strategy Intel — Fintoc | [N] fuentes analizadas esta semana_
+_Strategy Intel \u2014 Fintoc | [N] fuentes analizadas esta semana_
 
 FORMATO del content_slack (max 3800 chars):
 Version compacta con *bold* para titulos, <url|texto> para links. Mantener los datos duros y las preguntas estrategicas. Sin headers ##.`;
@@ -170,16 +170,28 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check minimum sections
-  const sectionIds = new Set(content.section_assignments.map(sa => sa.section));
-  const hasSections = sectionIds.size >= rules.min_sections;
+  // Check minimum topics in content (## headers in the memo)
+  const topicHeaders = (content.content_md.match(/^## .+/gm) || []);
+  const topicCount = topicHeaders.length;
+  const minTopics = 2; // New memo format: 2-3 deep topics
+  const hasTopics = topicCount >= minTopics;
   checks.push({
-    id: 'min_sections',
-    pass: hasSections,
+    id: 'min_topics',
+    pass: hasTopics,
     level: 'fail',
-    detail: `${sectionIds.size}/${rules.min_sections} secciones`,
+    detail: `${topicCount}/${minTopics} temas desarrollados`,
   });
-  if (!hasSections) errors.push(`Minimo ${rules.min_sections} secciones requeridas`);
+  if (!hasTopics) errors.push(`Minimo ${minTopics} temas desarrollados requeridos`);
+
+  // Check strategic structure (each topic should have key elements)
+  const hasStrategicQuestions = (content.content_md.match(/Pregunta para el equipo/gi) || []).length >= minTopics;
+  checks.push({
+    id: 'strategic_questions',
+    pass: hasStrategicQuestions,
+    level: 'warn',
+    detail: hasStrategicQuestions ? 'Preguntas estrategicas presentes' : 'Faltan preguntas estrategicas',
+  });
+  if (!hasStrategicQuestions) warnings.push('Algunos temas no tienen pregunta estrategica');
 
   // Check content exists
   const hasContent = content.content_md.length > 200;
