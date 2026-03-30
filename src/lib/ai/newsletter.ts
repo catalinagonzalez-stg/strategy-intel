@@ -26,59 +26,61 @@ export interface NewsletterContent {
 }
 
 const SECTIONS = FINTOC_CONTEXT.newsletter.sections
-  .map(s => `- "${s.id}": ${s.name} â ${s.description}`)
+  .map(s => `- "${s.id}": ${s.name} — ${s.description}`)
   .join('\n');
 
 const SYSTEM_PROMPT = `Eres el editor del newsletter "Strategy Intel Weekly" de Fintoc.
 
 ${getFintocContextPrompt()}
 
-Tu trabajo es generar el newsletter semanal a partir de las signals curadas.
+Tu trabajo es escribir un MEMO ESTRATEGICO semanal, NO un resumen de noticias.
 
-El newsletter debe:
-1. Tener un "tema de la semana" que capture la tendencia dominante
-2. Organizar las signals en secciones
-3. Ser conciso, profesional, y en espanol
-4. Cada seccion debe tener contenido accionable para el equipo de Fintoc
-5. Incluir URLs de las fuentes como links
+PRINCIPIOS EDITORIALES:
+1. FOCO > COBERTURA: Maximo 2-3 temas bien desarrollados. Nunca mas de 3. Es mejor profundidad que amplitud.
+2. DATOS DUROS: Cada afirmacion debe tener un numero, monto, porcentaje o metrica. "Visa se expandio" NO sirve. "Visa adquirio Prisma por USD 1.2B, sumando 40M tarjetas en Argentina" SI sirve.
+3. OPINION CON FUNDAMENTO: No describas, interpreta. Di lo que crees que significa para Fintoc y que deberian hacer. Toma posicion.
+4. PREGUNTAS QUE PROVOQUEN: Cada tema termina con una pregunta estrategica que obligue al equipo a pensar. No preguntas genericas ("que opinas?") sino especificas ("Deberiamos acelerar la integracion con X antes de que Y cierre el deal en MX?")
+5. ALERTAS URGENTES: Si hay algo critico (regulacion, movimiento de competidor directo), va primero como alerta de 2-3 lineas.
 
-Secciones disponibles:
+AUDIENCIA: Todo el equipo de Fintoc (~50 personas). Deben poder leerlo en 3 minutos y salir con una idea clara de "que esta pasando y por que nos importa".
+
+Secciones disponibles para section_assignments:
 ${SECTIONS}
 
 Responde UNICAMENTE con JSON valido (sin markdown, sin backticks):
 {
-  "tema_semana": "<titulo corto del tema de la semana>",
-  "content_md": "<newsletter completo en formato Markdown>",
-  "content_slack": "<version compacta para Slack en mrkdwn, max 3800 chars>",
+  "tema_semana": "<titulo que capture la tesis central, no un resumen>",
+  "content_md": "<memo estrategico en Markdown>",
+  "content_slack": "<version Slack en mrkdwn, max 3800 chars>",
   "section_assignments": [
     { "signal_id": "<id>", "section": "<section_id>", "sort_order": <numero> }
   ]
 }
 
-Formato del content_md:
-# Strategy Intel Weekly â [Tema de la Semana]
+FORMATO del content_md:
+
+# Strategy Intel Weekly — [Tema: una tesis, no un resumen]
 _Semana del [fecha]_
 
-## Que paso
-[Resumen ejecutivo, 3-5 bullets de los eventos mas importantes]
+[SI HAY ALERTA URGENTE: 2-3 lineas marcadas con 🚨 sobre regulacion o movimiento critico de competidor]
 
-## Implicancia Fintoc
-[Para cada evento clave, que significa para Fintoc y que deberiamos hacer]
+## [Titulo del Tema 1 — con angulo, no descriptivo]
+**Que paso:** [Parrafo corto con datos duros: montos, porcentajes, fechas, nombres]
+**Por que importa:** [Interpretacion para Fintoc. Toma posicion. "Esto significa que..." "Esto abre la puerta a..." "El riesgo es que..."]
+**Pregunta para el equipo:** [Pregunta estrategica especifica que obligue a pensar]
+_Fuente: [link]_
 
-## Movimientos de competencia
-[Actividad de competidores relevantes]
+## [Titulo del Tema 2]
+[Mismo formato]
 
-## Regulacion
-[Cambios regulatorios importantes. Si no hay, omitir seccion]
-
-## Tendencias
-[Tendencias emergentes a monitorear]
+## [Titulo del Tema 3 — solo si realmente aporta]
+[Mismo formato]
 
 ---
-_Fuentes: [lista de fuentes con links]_
+_Strategy Intel — Fintoc | [N] fuentes analizadas esta semana_
 
-Formato del content_slack (version compacta, max 3800 chars):
-Usa *bold* para titulos, <url|texto> para links. Sin headers ##.`;
+FORMATO del content_slack (max 3800 chars):
+Version compacta con *bold* para titulos, <url|texto> para links. Mantener los datos duros y las preguntas estrategicas. Sin headers ##.`;
 
 export async function generateNewsletter(signals: SignalForNewsletter[]): Promise<NewsletterContent> {
   if (signals.length === 0) {
@@ -105,19 +107,21 @@ Signal ${i + 1} (id: ${s.id}):
   weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
   const dateStr = weekStart.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const userMessage = `Genera el newsletter de la semana del ${dateStr}.
+  const userMessage = `Genera el memo estrategico de la semana del ${dateStr}.
 
-Hay ${signals.length} signals curadas:
+Hay ${signals.length} signals curadas. Tu trabajo NO es mencionar todas. Selecciona las 2-3 mas importantes y desarrollalas con profundidad.
 
 ${signalsSummary}
 
-Recuerda:
-- Priorizar signals con impact_level "high"
-- Priorizar signals MAS RECIENTES (publicados esta semana). Si una signal tiene fecha de publicacion mayor a 10 dias, marcala como contexto pero NO la pongas como noticia principal
-- Asegurarte de cubrir regiones CL y MX
-- Maximo 30% contenido global
-- En "Que paso" solo incluir eventos de los ultimos 7 dias. Si no hay suficientes, es mejor un newsletter corto que uno con noticias viejas
-- El content_slack debe ser una version compacta (max 3800 chars) del content_md`;
+INSTRUCCIONES CRITICAS:
+- MAXIMO 3 temas. Si hay 30 signals, igual son maximo 3 temas. Agrupa signals relacionadas bajo un mismo tema.
+- Cada tema DEBE tener datos duros (montos, %, cifras). Si una signal no tiene datos, busca en el contexto o mencionalo como limitacion.
+- Priorizar signals con impact_level "high" y publicadas esta semana.
+- Si una signal tiene fecha > 10 dias, NO usarla como tema principal. Puede ser contexto.
+- Priorizar regiones CL y MX. Maximo 1 tema global.
+- Las preguntas estrategicas deben ser ESPECIFICAS a Fintoc. No "que opinan?" sino "Deberiamos lanzar X en MX antes de Q3?"
+- El content_slack debe ser compacto (max 3800 chars) pero mantener datos duros y preguntas.
+- Es mejor un memo corto y denso que uno largo y vacio.`;
 
   const response = await callLLM({
     system: SYSTEM_PROMPT,
@@ -126,7 +130,7 @@ Recuerda:
   });
 
   try {
-    const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const cleaned = response.replace(/\`\`\`json\n?/g, '').replace(/\`\`\`\n?/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
     return {
@@ -143,8 +147,6 @@ Recuerda:
     };
   } catch (e) {
     console.error('[newsletter] Failed to parse LLM response:', response.substring(0, 300));
-    // Try to extract content even if JSON parsing failed
-    // Claude might have returned just the markdown directly
     return {
       tema_semana: 'Newsletter Semanal',
       content_md: response.length > 100 ? response : 'Error al generar newsletter.',
