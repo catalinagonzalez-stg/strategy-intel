@@ -32,6 +32,10 @@ function buildSearchQuery(sourceName: string, sourceUrl: string | null): string 
     'Serper - infra_pagos': 'infraestructura pagos fintech latinoamerica',
     'Serper - regulacion': 'regulacion fintech pagos latinoamerica open banking',
     'Serper - latam_pais': 'fintech latinoamerica pagos digitales startups',
+    // LinkedIn topic monitoring
+    'LinkedIn - fintech_latam': 'site:linkedin.com fintech pagos latinoamerica open banking',
+    'LinkedIn - payments_infra': 'site:linkedin.com payments infrastructure API fintech',
+    'LinkedIn - competitors': 'site:linkedin.com (Khipu OR Toku OR Etpay OR Kushki OR dLocal OR EBANX OR Belvo OR Prometeo) fintech',
   };
   if (keywordSources[sourceName]) return keywordSources[sourceName];
 
@@ -64,6 +68,16 @@ function buildSearchQuery(sourceName: string, sourceUrl: string | null): string 
     'Contxto': 'site:contxto.com OR Contxto startups fintech latinoamerica',
     'The Paypers': 'site:thepaypers.com OR "The Paypers" payments fintech',
     'Fintech Futures': 'site:fintechfutures.com OR "Fintech Futures" payments banking fintech',
+    // LinkedIn company pages — competitor announcements
+    'LinkedIn - Fintoc': 'site:linkedin.com/company/fintoc OR site:linkedin.com/in/ Fintoc pagos',
+    'LinkedIn - Khipu': 'site:linkedin.com (Khipu pagos Chile announcement OR hiring)',
+    'LinkedIn - dLocal': 'site:linkedin.com dLocal pagos latinoamerica',
+    'LinkedIn - EBANX': 'site:linkedin.com EBANX payments fintech',
+    'LinkedIn - Belvo': 'site:linkedin.com Belvo open banking API',
+    'LinkedIn - MercadoPago': 'site:linkedin.com "Mercado Pago" fintech pagos',
+    // LinkedIn thought leaders & executives
+    'LinkedIn - leaders_CL': 'site:linkedin.com (fintech OR pagos OR "open banking") Chile CEO founder',
+    'LinkedIn - leaders_MX': 'site:linkedin.com (fintech OR pagos OR "open banking") Mexico CEO founder',
   };
   if (entityQueries[sourceName]) return entityQueries[sourceName];
 
