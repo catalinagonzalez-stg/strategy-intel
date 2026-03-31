@@ -105,12 +105,15 @@ _Semana del [fecha]_
 [1-2 oraciones de que paso, con datos duros]
 :arrow_right: *Para nosotros:* [Interpretacion directa, toma de posicion, 1-2 oraciones]
 :question: _[Pregunta estrategica especifica para el equipo]_
+:link: <url_de_la_fuente|Fuente>
 
 [EMOJI] *[Titulo tema 2]*
 [Mismo patron]
+:link: <url_de_la_fuente|Fuente>
 
 [EMOJI tema 3 si aplica]
 [Mismo patron]
+:link: <url_de_la_fuente|Fuente>
 
 \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
 :speech_balloon: _Discutamos en el thread_ :point_down:
@@ -124,6 +127,8 @@ EMOJIS POR TIPO DE TEMA (elige segun contenido):
 - :rocket: Producto / tecnologia nueva
 - :moneybag: Funding / M&A
 - :globe_with_meridians: Expansion / mercado nuevo
+
+LINKS A FUENTES: Cada tema DEBE incluir un link a la fuente principal usando formato Slack: <url|Nombre>. Esto permite que quien lea pueda profundizar.
 
 IMPORTANTE: El content_slack NO es una conversion del content_md. Es una pieza independiente, optimizada para engagement en Slack. Debe ser escaneable en 30 segundos y leible en profundidad en 2 minutos.`;
 
@@ -169,6 +174,7 @@ INSTRUCCIONES CRITICAS:
 - Tono del content_slack: como un colega senior contandote algo urgente, no un analista presentando un informe. Oraciones cortas. "Nos" y "nosotros" para Fintoc.
 - La primera linea del content_slack DEBE ser un gancho que genere curiosidad o urgencia.
 - content_slack max 3800 chars.
+- Cada tema en content_slack DEBE incluir link a la fuente principal con formato Slack <url|Nombre>. Los URLs estan en los datos de cada signal.
 - Es mejor un memo corto y denso que uno largo y vacio.`;
 
   const response = await callLLM({
