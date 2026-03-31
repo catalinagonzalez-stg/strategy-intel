@@ -33,8 +33,8 @@ export function mdToSlack(md: string): string {
   //   1. Title / opening paragraph (the hook)
   //   2. "Lo importante" (signal + what happened)
   //   3. "Implicancia para Fintoc"
-  //   4. "Pregunta estratégica"
-  const sections = md.split(/\n(?=##?\s|📰|🔎|🤔)/u);
+  //   4. "Pregunta estratÃ©gica"
+  const sections = md.split(/\n(?=##?\s|ð°|ð|ð¤)/u);
 
   let opening = '';
       let loImportante = '';
@@ -43,7 +43,7 @@ export function mdToSlack(md: string): string {
 
   for (const section of sections) {
           const lower = section.toLowerCase();
-          if (lower.includes('lo importante') || lower.includes('qué pasó') || lower.includes('que pasó')) {
+          if (lower.includes('lo importante') || lower.includes('quÃ© pasÃ³') || lower.includes('que pasÃ³')) {
                     loImportante += section + '\n';
           } else if (lower.includes('implicancia')) {
                     implicancia += section + '\n';
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
   }
 
   if (edition.status !== 'validated') {
-          return NextResponse.json({ error: \`Cannot send: status is \${edition.status}\` }, { status: 400 });
+          return NextResponse.json({ error: `Cannot send: status is ${edition.status}` }, { status: 400 });
   }
 
   const slackToken = process.env.SLACK_BOT_TOKEN;
@@ -128,11 +128,11 @@ export async function POST(request: Request) {
   if (slackContent && slackContent.length > 50 && slackContent.length <= MAX_SLACK_LEN) {
     content = slackContent;
   } else if (slackContent && slackContent.length > MAX_SLACK_LEN) {
-    // Slack version exists but too long — truncate at last complete section
+    // Slack version exists but too long â truncate at last complete section
     const truncated = slackContent.substring(0, MAX_SLACK_LEN - 100);
-    const lastSeparator = truncated.lastIndexOf('\u2501'); // ━ character
+    const lastSeparator = truncated.lastIndexOf('\u2501'); // â character
     content = lastSeparator > 0
-      ? truncated.substring(0, lastSeparator) + '\n_Strategy Intel — Fintoc_'
+      ? truncated.substring(0, lastSeparator) + '\n_Strategy Intel â Fintoc_'
       : truncated + '...';
   } else {
     content = mdToSlack(sourceMd);
@@ -141,14 +141,14 @@ export async function POST(request: Request) {
   const res = await fetch('https://slack.com/api/chat.postMessage', {
           method: 'POST',
           headers: {
-                    'Authorization': \`Bearer \${slackToken}\`,
+                    'Authorization': `Bearer ${slackToken}`,
                     'Content-Type': 'application/json',
           },
           body: JSON.stringify({ channel: channelId, text: content, mrkdwn: true }),
   });
       const result = await res.json();
       if (!result.ok) {
-              return NextResponse.json({ error: \`Slack error: \${result.error}\` }, { status: 500 });
+              return NextResponse.json({ error: `Slack error: ${result.error}` }, { status: 500 });
       }
 
   await supabase
