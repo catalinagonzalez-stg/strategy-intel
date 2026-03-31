@@ -2,18 +2,41 @@ import { createHash } from 'crypto';
 import { type ParsedEntry } from './rss';
 
 /**
- * Fetch news articles about a topic/company using Serper Google News API.
- *
- * Serper sources have:
- * - name: display name (e.g., "Khipu (CL)", "Serper - payments_global")
- * - url: target website or empty for keyword-based sources
- *
- * For company-specific sources (url = "https://www.khipu.com"),
- * we search for news about that company.
- *
- * For keyword-based sources (name = "Serper - payments_global"),
- * we search for the topic directly.
+ * Parse date strings from Serper API.
+ * Serper returns dates like "2 hours ago", "3 days ago", "hace 2 horas",
+ * or standard date strings. This function handles all cases safely.
  */
+function parseSerperDate(dateStr: string | undefined): string {
+  if (!dateStr) return new Date().toISOString();
+
+  // Try parsing as a standard date first
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) return parsed.toISOString();
+
+  // Handle relative date strings (English and Spanish)
+  const now = Date.now();
+  const lower = dateStr.toLowerCase();
+
+  // Match patterns like "2 hours ago", "3 days ago", "hace 2 horas", "hace 1 dia"
+  const relMatch = lower.match(/(\d+)\s*(hour|hora|minute|minuto|day|día|dia|week|semana|month|mes|second|segundo)s?\s*(ago|atrás|atras)?/);
+  if (relMatch) {
+    const amount = parseInt(relMatch[1], 10);
+    const unit = relMatch[2];
+    let ms = 0;
+
+    if (unit.startsWith('second') || unit.startsWith('segundo')) ms = amount * 1000;
+    else if (unit.startsWith('minute') || unit.startsWith('minuto')) ms = amount * 60 * 1000;
+    else if (unit.startsWith('hour') || unit.startsWith('hora')) ms = amount * 3600 * 1000;
+    else if (unit.startsWith('day') || unit.startsWith('día') || unit.startsWith('dia')) ms = amount * 86400 * 1000;
+    else if (unit.startsWith('week') || unit.startsWith('semana')) ms = amount * 7 * 86400 * 1000;
+    else if (unit.startsWith('month') || unit.startsWith('mes')) ms = amount * 30 * 86400 * 1000;
+
+    return new Date(now - ms).toISOString();
+  }
+
+  // Fallback: return current time
+  return new Date().toISOString();
+}
 
 interface SerperNewsResult {
   title: string;
@@ -66,7 +89,7 @@ function buildSearchQuery(sourceName: string, sourceUrl: string | null): string 
     'EBANX (BR)': 'EBANX Brasil pagos fintech',
     'Prometeo': 'Prometeo open banking API latinoamerica',
     'CMF Chile': 'CMF Chile regulacion financiera fintech',
-    'CNBV M\u00e9xico': 'CNBV Mexico regulacion fintech',
+    'CNBV México': 'CNBV Mexico regulacion fintech',
     'Banxico': 'Banxico Mexico pagos regulacion',
     'Banco Central Chile': 'Banco Central Chile pagos regulacion',
     'FNE Chile': 'FNE Chile competencia fintech',
@@ -83,6 +106,7 @@ function buildSearchQuery(sourceName: string, sourceUrl: string | null): string 
     .replace(/\(.*?\)/g, '')
     .replace(/serper\s*-?\s*/i, '')
     .trim();
+
   return cleanName + ' fintech pagos';
 }
 
@@ -147,7 +171,7 @@ export async function fetchSerperNews(
         author: item.source || null,
         content_snippet: item.snippet || null,
         content_text: item.snippet || null,
-        published_at: item.date ? new Date(item.date).toISOString() : new Date().toISOString(),
+        published_at: parseSerperDate(item.date),
         source_domain: sourceDomain,
         content_hash: hash,
       };
