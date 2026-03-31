@@ -80,7 +80,52 @@ _Fuente: [link]_
 _Strategy Intel \u2014 Fintoc | [N] fuentes analizadas esta semana_
 
 FORMATO del content_slack (max 3800 chars):
-Version compacta con *bold* para titulos, <url|texto> para links. Mantener los datos duros y las preguntas estrategicas. Sin headers ##.`;
+El content_slack es el PRODUCTO PRINCIPAL. Debe dar ganas de leerlo en Slack. Usa mrkdwn nativo de Slack.
+
+REGLAS DE TONO PARA SLACK:
+- Escribe como un colega senior que te cuenta las noticias en el pasillo, no como un analista que presenta un informe.
+- Primera linea = gancho que genera urgencia o curiosidad. NO "Innovacion en Pagos A2A". SI "Santander y Visa acaban de lanzar pagos con IA en Chile. Esto nos afecta directamente."
+- Oraciones cortas. Parrafos de 1-2 lineas maximo. La gente escanea en Slack.
+- Usa "nosotros/nos" cuando hables de Fintoc. "Esto nos pone en jaque" > "Esto pone a Fintoc en una posicion complicada".
+
+TEMPLATE EXACTO del content_slack (usa mrkdwn de Slack, NO markdown):
+
+:rotating_light: *Strategy Intel Weekly*
+_Semana del [fecha]_
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+
+*TL;DR \u2014 Lo que necesitas saber:*
+\u2022 [Bullet 1: hecho + implicancia en 1 linea. Ej: "Santander lanza pagos IA en Chile \u2014 competencia directa para nuestro A2A"]
+\u2022 [Bullet 2: mismo formato]
+\u2022 [Bullet 3: mismo formato]
+
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+
+[EMOJI] *[Titulo corto y con angulo]*
+[1-2 oraciones de que paso, con datos duros]
+:arrow_right: *Para nosotros:* [Interpretacion directa, toma de posicion, 1-2 oraciones]
+:question: _[Pregunta estrategica especifica para el equipo]_
+
+[EMOJI] *[Titulo tema 2]*
+[Mismo patron]
+
+[EMOJI tema 3 si aplica]
+[Mismo patron]
+
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+:speech_balloon: _Discutamos en el thread_ :point_down:
+_Strategy Intel \u2014 Fintoc | [N] fuentes analizadas_
+
+EMOJIS POR TIPO DE TEMA (elige segun contenido):
+- :rotating_light: Alerta urgente / regulacion critica
+- :crossed_swords: Competencia / movimiento de competidor
+- :shield: Regulacion / compliance
+- :chart_with_upwards_trend: Tendencia / oportunidad de mercado
+- :rocket: Producto / tecnologia nueva
+- :moneybag: Funding / M&A
+- :globe_with_meridians: Expansion / mercado nuevo
+
+IMPORTANTE: El content_slack NO es una conversion del content_md. Es una pieza independiente, optimizada para engagement en Slack. Debe ser escaneable en 30 segundos y leible en profundidad en 2 minutos.`;
 
 export async function generateNewsletter(signals: SignalForNewsletter[]): Promise<NewsletterContent> {
   if (signals.length === 0) {
@@ -120,7 +165,10 @@ INSTRUCCIONES CRITICAS:
 - Si una signal tiene fecha > 10 dias, NO usarla como tema principal. Puede ser contexto.
 - Priorizar regiones CL y MX. Maximo 1 tema global.
 - Las preguntas estrategicas deben ser ESPECIFICAS a Fintoc. No "que opinan?" sino "Deberiamos lanzar X en MX antes de Q3?"
-- El content_slack debe ser compacto (max 3800 chars) pero mantener datos duros y preguntas.
+- El content_slack es el PRODUCTO MAS IMPORTANTE. Debe dar ganas de leerlo en Slack. Sigue el template exacto con TL;DR, emojis, y preguntas destacadas.
+- Tono del content_slack: como un colega senior contandote algo urgente, no un analista presentando un informe. Oraciones cortas. "Nos" y "nosotros" para Fintoc.
+- La primera linea del content_slack DEBE ser un gancho que genere curiosidad o urgencia.
+- content_slack max 3800 chars.
 - Es mejor un memo corto y denso que uno largo y vacio.`;
 
   const response = await callLLM({
