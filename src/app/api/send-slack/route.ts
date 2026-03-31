@@ -34,7 +34,7 @@ export function mdToSlack(md: string): string {
   //   2. "Lo importante" (signal + what happened)
   //   3. "Implicancia para Fintoc"
   //   4. "Pregunta estratégica"
-  const sections = md.split(/\n(?=##?\s|📰|🔎|🤔)/);
+  const sections = md.split(/\n(?=##?\s|📰|🔎|🤔)/u);
 
   let opening = '';
       let loImportante = '';
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
   }
 
   if (edition.status !== 'validated') {
-          return NextResponse.json({ error: `Cannot send: status is ${edition.status}` }, { status: 400 });
+          return NextResponse.json({ error: \`Cannot send: status is \${edition.status}\` }, { status: 400 });
   }
 
   const slackToken = process.env.SLACK_BOT_TOKEN;
@@ -116,25 +116,39 @@ export async function POST(request: Request) {
               return NextResponse.json({ error: 'Slack not configured' }, { status: 500 });
       }
 
+  // Prefer the LLM-crafted Slack version; fall back to converting markdown
+  const slackContent = edition.content_slack || '';
   const sourceMd = edition.content_md || '';
-      if (!sourceMd) {
-              return NextResponse.json({ error: 'No newsletter content (content_md) found' }, { status: 400 });
-      }
+  if (!slackContent && !sourceMd) {
+    return NextResponse.json({ error: 'No newsletter content found' }, { status: 400 });
+  }
 
-  // Always a single message, always under 3900 chars
-  const content = mdToSlack(sourceMd);
+  // Use content_slack directly if available and within limits, otherwise convert from md
+  let content: string;
+  if (slackContent && slackContent.length > 50 && slackContent.length <= MAX_SLACK_LEN) {
+    content = slackContent;
+  } else if (slackContent && slackContent.length > MAX_SLACK_LEN) {
+    // Slack version exists but too long — truncate at last complete section
+    const truncated = slackContent.substring(0, MAX_SLACK_LEN - 100);
+    const lastSeparator = truncated.lastIndexOf('\u2501'); // ━ character
+    content = lastSeparator > 0
+      ? truncated.substring(0, lastSeparator) + '\n_Strategy Intel — Fintoc_'
+      : truncated + '...';
+  } else {
+    content = mdToSlack(sourceMd);
+  }
 
   const res = await fetch('https://slack.com/api/chat.postMessage', {
           method: 'POST',
           headers: {
-                    'Authorization': `Bearer ${slackToken}`,
+                    'Authorization': \`Bearer \${slackToken}\`,
                     'Content-Type': 'application/json',
           },
           body: JSON.stringify({ channel: channelId, text: content, mrkdwn: true }),
   });
       const result = await res.json();
       if (!result.ok) {
-              return NextResponse.json({ error: `Slack error: ${result.error}` }, { status: 500 });
+              return NextResponse.json({ error: \`Slack error: \${result.error}\` }, { status: 500 });
       }
 
   await supabase
