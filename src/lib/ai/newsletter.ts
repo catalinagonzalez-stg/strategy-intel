@@ -101,7 +101,8 @@ Usa este formato exacto con emojis y mrkdwn de Slack:
 _Semana del [fecha]_
 
 :one: *[Titulo especifico Tema 1 — captura la sustancia]*
-[2-3 lineas con TODOS los datos concretos que aparezcan en la signal: quien, que hizo, cuando, donde, montos, %, cifras. Si la signal no tiene cifras, describe cualitativamente. NO INVENTES datos.]
+[Linea 1: que paso concretamente, con TODOS los datos que aparezcan en la signal: quien, que hizo, cuando, donde, montos, %, cifras.]
+[Linea 2 — opcional pero recomendada: una sola frase que ubique la noticia en su contexto industrial. NUNCA prescriptiva ("debemos"), NUNCA defensiva ("nos pone en riesgo"). SI observacional ("se suma a la ola de X en LATAM" / "es la tercera ronda Seed de pagos en la region este trimestre"). Solo si aporta — si no, omitela.]
 <url|:link: Fuente>
 
 :two: *[Titulo especifico Tema 2]*
@@ -113,7 +114,9 @@ _Semana del [fecha]_
 <url|:link: Fuente>
 
 :mag: *Y esto que significa para el ecosistema?*
-[Parrafo de 3-5 lineas, observacional y denso. Conecta los temas con tendencias mas amplias del ecosistema fintech LATAM. Sin "debemos" ni "hay que". Si no hay conexion clara, mejor decir poco.]
+[Parrafo OBLIGATORIO de minimo 60 palabras (idealmente 70-100). Observacional y denso. Conecta los temas de la semana con una tendencia mas amplia del ecosistema fintech LATAM. NO resumas los temas anteriores — agrega capa de analisis. Identifica el patron: por que estas noticias estan pasando ahora? Que actores se estan moviendo en la misma direccion? Que arbitraje regulatorio o competitivo se esta abriendo? Sin "debemos" ni "hay que". Sin amenazas. Solo observacion informada.
+
+Ejemplo del tono buscado (no copies, es ilustrativo): "La coincidencia entre la nueva normativa de open finance en Brasil y los anuncios de Mexico marca un cambio de fase en LATAM: los reguladores estan dejando de mirar el modelo europeo y empiezan a definir reglas propias, mas pragmaticas y menos prescriptivas. En paralelo, el capital semilla sigue fluyendo hacia infra de pagos transfronterizos, lo que sugiere que los inversores apuestan a que la fragmentacion regulatoria sera el negocio de la decada."]
 
 ---
 :robot_face: _Strategy Intel — Fintoc | [N] fuentes_`;
@@ -128,8 +131,20 @@ export async function generateNewsletter(signals: SignalForNewsletter[]): Promis
     };
   }
 
-  // Mark which signals contain hard data (numbers, %, $, dates) so the LLM can prioritize them
-  const hasHardData = (text: string) => /\$|usd|us\$|clp|mxn|brl|cop|pen|ars|\d+%|\d+[.,]\d+|\d+\s?(m|mm|b|bn|millon|millone|mil|miles|usuarios|tarjeta|empresa|pa[ií]s|punto)/i.test(text || '');
+  // Mark which signals contain hard data — STRICT version.
+  // Requires real substance: monetary amounts, percentages, large counts, or named multi-token entities with magnitude.
+  // A lonely "89th" or "2026" by itself does NOT qualify.
+  const hasHardData = (text: string) => {
+    if (!text) return false;
+    const t = text.toLowerCase();
+    const monetary = /(us\$|usd|u\$s|\$\s?\d|clp|mxn|brl|cop|pen|ars)\s?\d/.test(t)
+      || /\d+\s?(millon|millones|mil millones|billon|billones|bn|mm)/.test(t);
+    const percent = /\d+([.,]\d+)?\s?%/.test(t);
+    const bigCount = /\d{2,}[.,]?\d*\s?(usuarios|clientes|tarjetas|comercios|empresas|transacciones|operaciones|cuentas|pa[ií]ses|fintechs?)/.test(t);
+    const namedDeal = /(adquir|compr|invierte|invirti|levant|recaud|recauda|raise|funding|serie [a-d]|seed|round)/.test(t)
+      && /\d/.test(t);
+    return monetary || percent || bigCount || namedDeal;
+  };
 
   const signalsSummary = signals.map((s, i) => {
     const dataRich = hasHardData(s.summary_factual);
@@ -180,7 +195,7 @@ RECORDATORIO DE DATOS — LEE ESTO:
 - Si una signal es vaga ("Mastercard esta facilitando pagos"), no la rellenes con datos inventados — describela como esta o no la uses como tema principal
 - Mejor un newsletter corto y veridico que uno largo y especulativo
 - Los titulos deben ser ESPECIFICOS, no etiquetas genericas. "Visa compra YellowPepper para entrar a real-time payments" > "Movimientos en LATAM"
-- El parrafo de ecosistema debe tener MINIMO 50 palabras (idealmente 70-100), con sustancia: conecta los temas con tendencias del ecosistema, no resumas lo ya dicho. Si es muy corto sera rechazado.
+- El parrafo de ecosistema es OBLIGATORIO y debe tener MINIMO 60 palabras (idealmente 70-100). Si tiene menos sera rechazado por validacion. NO resumas los temas — agrega capa de analisis: conecta los puntos, identifica el patron, nombra la tendencia mas amplia.
 - En section_assignments usa SOLO estos 5 valores en "section": "que_paso", "implicancia_fintoc", "competencia", "regulacion", "tendencias". Cualquier otro valor sera rechazado por la base de datos.`;
 
   const response = await callLLM({
@@ -284,19 +299,19 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   });
   if (hasForbiddenLanguage) warnings.push('El newsletter contiene lenguaje prescriptivo o alarmista que deberia ser revisado');
 
-  // Check ecosystem paragraph length (must be substantive, not a 1-line throwaway)
+  // Check ecosystem paragraph length — now a hard FAIL (was a warning).
   const ecosystemMatch = content.content_slack.match(/Y esto que significa para el ecosistema\?\*([\s\S]*?)(?=\n---|\n:robot|$)/i);
   const ecosystemText = ecosystemMatch ? ecosystemMatch[1].trim() : '';
   const ecosystemWordCount = ecosystemText.split(/\s+/).filter(Boolean).length;
-  const minEcosystemWords = 50;
+  const minEcosystemWords = 60;
   const ecosystemOk = ecosystemWordCount >= minEcosystemWords;
   checks.push({
     id: 'ecosystem_paragraph_length',
     pass: ecosystemOk,
-    level: 'warn',
+    level: 'fail',
     detail: `Parrafo ecosistema: ${ecosystemWordCount} palabras (minimo ${minEcosystemWords})`,
   });
-  if (!ecosystemOk) warnings.push(`El parrafo de ecosistema tiene solo ${ecosystemWordCount} palabras (minimo recomendado: ${minEcosystemWords}). Debe ser mas denso y observacional.`);
+  if (!ecosystemOk) errors.push(`El parrafo de ecosistema tiene ${ecosystemWordCount} palabras. Minimo requerido: ${minEcosystemWords}. Debe ser mas denso y observacional.`);
 
   // Check section_assignments use valid section IDs
   const validSectionIds: Set<string> = new Set(FINTOC_CONTEXT.newsletter.sections.map(s => String(s.id)));
