@@ -1,3 +1,4 @@
+
 import { callLLM } from './client';
 import { getFintocContextPrompt, FINTOC_CONTEXT } from '@/lib/fintoc-context';
 
@@ -37,10 +38,12 @@ Tu trabajo es escribir un RESUMEN SEMANAL informativo e interesante, como un col
 
 PRINCIPIOS EDITORIALES:
 1. FOCO > COBERTURA: Maximo 2-3 temas bien desarrollados. Nunca mas de 3. Es mejor profundidad que amplitud.
-2. CONTEXTO SUFICIENTE: Cada noticia debe tener 1-2 lineas que expliquen QUE paso concretamente (quien, que hizo, cuando, cifras si hay). El lector no deberia tener que googlear para entender la noticia.
-3. DATOS DUROS: Incluir numeros, montos, porcentajes cuando esten disponibles. "Visa se expandio" NO sirve. "Visa adquirio Prisma por USD 1.2B, sumando 40M tarjetas en Argentina" SI sirve.
-4. CURIOSIDAD, NO ALARMA: El tono debe generar interes genuino. Nunca urgencia, miedo o sensacion de amenaza. Somos observadores informados del ecosistema, no bomberos apagando incendios.
-5. NOTICIAS SEPARADAS: Si hay dos noticias distintas (ej. una sobre Nubank y otra sobre Visa), tratalas como temas separados con su propio contexto. No las mezcles en un parrafo sin explicar cada una.
+2. CONTEXTO SUFICIENTE: Cada noticia debe tener 2-3 lineas que expliquen QUE paso concretamente (quien, que hizo, cuando, donde, cifras si hay). El lector no deberia tener que googlear para entender la noticia.
+3. DATOS DUROS — REGLA ABSOLUTA: Si la signal contiene numeros, montos, porcentajes, fechas, nombres de empresas, paises, productos especificos: USALOS TODOS. Extrae cada cifra y dato concreto que aparezca en el campo "Hecho" de la signal. Si la signal NO tiene cifras, NO INVENTES — describe cualitativamente lo que dice y punto.
+4. PROHIBIDO INVENTAR: Jamas inventes datos, cifras, montos o detalles que no esten explicitamente en las signals que recibes. Si una signal dice "Visa adquirio una fintech", NO escribas "Visa adquirio una fintech por USD 200M sumando 5M usuarios" si esos numeros no estan en la signal. Mejor escribir poco y verdadero que mucho e inventado.
+5. CURIOSIDAD, NO ALARMA: El tono debe generar interes genuino. Nunca urgencia, miedo o sensacion de amenaza. Somos observadores informados del ecosistema, no bomberos apagando incendios.
+6. NOTICIAS SEPARADAS: Si hay dos noticias distintas (ej. una sobre Nubank y otra sobre Visa), tratalas como temas separados con su propio contexto. No las mezcles en un parrafo sin explicar cada una.
+7. TITULOS ESPECIFICOS: El tema_semana y los titulos de cada tema deben ser ESPECIFICOS, no genericos. Mal: "Movimientos Estrategicos en LATAM". Bien: "Visa apuesta por real-time payments mientras Mexico avanza en open banking". El titulo debe capturar la sustancia, no ser una etiqueta generica.
 
 REGLAS DE TONO — MUY IMPORTANTE:
 - NUNCA uses: "debemos", "deberiamos", "tenemos que", "necesitamos", "hay que actuar", "es urgente", "amenaza", "nos pone en jaque", "rivalizando directamente", "amenaza directa"
@@ -84,7 +87,7 @@ _Fuente: [link]_
 _Fuente: [link]_
 
 :mag: *Y esto que significa para el ecosistema?*
-[UN solo parrafo corto y observacional sobre lo que estas noticias pueden significar para el ecosistema fintech en LATAM. Solo si hay implicancias relevantes. Tono: observacion informada, NUNCA recomendacion de accion. Ejemplo: "La entrada de X al mercado Y podria acelerar la adopcion de pagos A2A en la region" — NO "Deberiamos prepararnos para competir con X".]
+[Un parrafo de 3-5 lineas, denso y observacional, conectando los temas de la semana con tendencias del ecosistema fintech LATAM. NO un resumen de los temas anteriores. Si hay un patron entre los temas, nombralo. Si las noticias apuntan a una tendencia mas amplia (ej. consolidacion de pagos en tiempo real, mayor regulacion de open banking, entrada de jugadores globales), explicala con sustancia. Tono: analista informado que conecta puntos. NUNCA prescriptivo ("deberiamos", "hay que"). NUNCA defensivo ("nos pone en riesgo"). SI observacional ("la convergencia entre X e Y sugiere que..."). Si los temas no se conectan claramente con una tendencia, di poco — vale mas un parrafo corto y honesto que uno largo y forzado.]
 
 ---
 _Strategy Intel — Fintoc | [N] fuentes analizadas esta semana_
@@ -96,20 +99,20 @@ Usa este formato exacto con emojis y mrkdwn de Slack:
 :newspaper: *Strategy Intel Weekly — [Tema de la semana]* :newspaper:
 _Semana del [fecha]_
 
-:one: *[Titulo Tema 1]*
-[Descripcion con contexto suficiente: que paso, quien, cifras. 2-3 lineas que informen bien.]
+:one: *[Titulo especifico Tema 1 — captura la sustancia]*
+[2-3 lineas con TODOS los datos concretos que aparezcan en la signal: quien, que hizo, cuando, donde, montos, %, cifras. Si la signal no tiene cifras, describe cualitativamente. NO INVENTES datos.]
 <url|:link: Fuente>
 
-:two: *[Titulo Tema 2]*
-[Descripcion con contexto. 2-3 lineas.]
+:two: *[Titulo especifico Tema 2]*
+[2-3 lineas con datos concretos. NO INVENTES.]
 <url|:link: Fuente>
 
-:three: *[Titulo Tema 3]*
-[Solo si aporta. Descripcion con contexto.]
+:three: *[Titulo especifico Tema 3]*
+[Solo si aporta. 2-3 lineas con datos concretos. NO INVENTES.]
 <url|:link: Fuente>
 
 :mag: *Y esto que significa para el ecosistema?*
-[Un parrafo corto observacional. Sin "debemos" ni "hay que". Solo observacion informada.]
+[Parrafo de 3-5 lineas, observacional y denso. Conecta los temas con tendencias mas amplias del ecosistema fintech LATAM. Sin "debemos" ni "hay que". Si no hay conexion clara, mejor decir poco.]
 
 ---
 :robot_face: _Strategy Intel — Fintoc | [N] fuentes_`;
@@ -160,7 +163,15 @@ RECORDATORIO DE TONO — LEE ESTO:
 - NO hagas recomendaciones de accion
 - NO uses "Para nosotros" ni "nuestras soluciones" ni "rivalizando directamente"
 - SI escribe de forma informativa, interesante y observacional
-- Imagina que le estas contando noticias interesantes a un amigo que trabaja en fintech. Informas, no alarmas.`;
+- Imagina que le estas contando noticias interesantes a un amigo que trabaja en fintech. Informas, no alarmas.
+
+RECORDATORIO DE DATOS — LEE ESTO:
+- NUNCA inventes cifras, montos, porcentajes, fechas o nombres que no esten en las signals
+- Extrae TODOS los datos concretos que SI esten en las signals (en el campo "Hecho")
+- Si una signal es vaga ("Mastercard esta facilitando pagos"), no la rellenes con datos inventados — describela como esta o no la uses como tema principal
+- Mejor un newsletter corto y veridico que uno largo y especulativo
+- Los titulos deben ser ESPECIFICOS, no etiquetas genericas. "Visa compra YellowPepper para entrar a real-time payments" > "Movimientos en LATAM"
+- El parrafo de ecosistema debe tener sustancia: conecta los temas con tendencias del ecosistema, no resumas lo ya dicho`;
 
   const response = await callLLM({
     system: SYSTEM_PROMPT,
