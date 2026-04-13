@@ -299,9 +299,9 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   if (!ecosystemOk) warnings.push(`El parrafo de ecosistema tiene solo ${ecosystemWordCount} palabras (minimo recomendado: ${minEcosystemWords}). Debe ser mas denso y observacional.`);
 
   // Check section_assignments use valid section IDs
-  const validSectionIds = new Set(FINTOC_CONTEXT.newsletter.sections.map(s => s.id));
+  const validSectionIds: Set<string> = new Set(FINTOC_CONTEXT.newsletter.sections.map(s => String(s.id)));
   const invalidSections = content.section_assignments
-    .map(sa => sa.section)
+    .map(sa => String(sa.section))
     .filter(sec => !validSectionIds.has(sec));
   const sectionsOk = invalidSections.length === 0;
   checks.push({
