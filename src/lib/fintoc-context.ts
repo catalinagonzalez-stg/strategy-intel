@@ -1,6 +1,6 @@
 /**
  * Fintoc Context — Company intelligence for newsletter personalization
- *
+ * 
  * This module provides structured context about Fintoc's products, markets,
  * competitors, and strategic priorities. Used by the newsletter generation
  * pipeline to produce highly relevant, personalized content.
