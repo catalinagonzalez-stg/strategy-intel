@@ -76,10 +76,11 @@ export async function POST() {
         .limit(4);
 
       if (recentEditions && recentEditions.length > 0) {
-        newsletterContext.recentTopics = recentEditions
+        const topics = recentEditions
           .map((e: any) => `${e.edition_date}: ${e.tema_semana}`)
           .filter((t: string) => t.length > 10);
-        console.log(`[generate-newsletter] Found ${newsletterContext.recentTopics.length} recent topics for dedup`);
+        newsletterContext.recentTopics = topics;
+        console.log(`[generate-newsletter] Found ${topics.length} recent topics for dedup`);
       }
     } catch (err) {
       console.warn('[generate-newsletter] Could not fetch recent topics:', err);
