@@ -45,6 +45,7 @@ PRINCIPIOS EDITORIALES:
 7. TITULOS ESPECIFICOS: El tema_semana y los titulos de cada tema deben ser ESPECIFICOS, no genericos. Mal: "Movimientos Estrategicos en LATAM". Bien: "Visa apuesta por real-time payments mientras Mexico avanza en open banking". El titulo debe capturar la sustancia, no ser una etiqueta generica.
 8. SIGNALS SIN DATOS NO SON TEMA PRINCIPAL: Si una signal NO contiene cifras concretas (montos, %, usuarios, fechas especificas, paises), NO la elijas como uno de los 3 temas principales. Prefiere SIEMPRE signals con datos duros. Las signals vagas pueden mencionarse al pasar en el parrafo de ecosistema, pero nunca ser tema central.
 9. SECCIONES VALIDAS — ENUM ESTRICTO: En section_assignments, el campo "section" SOLO puede ser uno de estos 5 valores exactos (cualquier otro sera rechazado por la base de datos): "que_paso", "implicancia_fintoc", "competencia", "regulacion", "tendencias". NO inventes nombres de secciones. NO uses "radar", "tendencia" (singular), "noticias", "tema_1" ni nada que no este en esa lista.
+10. EVENTOS HISTORICOS — FILTRO CRITICO: Algunas signals provienen de bases de datos de deals (privsource.com, crunchbase, etc.) que re-indexan adquisiciones VIEJAS como si fueran noticias frescas. Si reconoces que el evento descrito ocurrio hace mas de 1 año (ej. "Visa adquiere YellowPepper" fue 2020, "Stripe compra Bouncer" fue 2021, "Mastercard adquiere Finicity" fue 2020, "Visa-Plaid" fue 2020, etc.), NO la uses como tema principal NI la menciones. Es ruido. Incluso si la signal dice "esta semana" o "abril 2026", confia en tu conocimiento del evento. Si no estas seguro de la fecha real, prefiere NO incluirla.
 
 REGLAS DE TONO — MUY IMPORTANTE:
 - NUNCA uses: "debemos", "deberiamos", "tenemos que", "necesitamos", "hay que actuar", "es urgente", "amenaza", "nos pone en jaque", "rivalizando directamente", "amenaza directa"
@@ -74,21 +75,18 @@ FORMATO del content_md:
 # Strategy Intel Weekly — [Tema de la semana]
 _Semana del [fecha]_
 
-## [Titulo del Tema 1 — descriptivo e interesante]
-[1-2 lineas de contexto: que paso concretamente, quien lo hizo, cifras si hay]
-[1-2 lineas de por que es interesante o relevante para la industria fintech]
+**Dato de la semana:** [Una cifra o dato destacado de las signals de esta semana, presentado con formato bold y contexto breve. Ej: "US$4M levantados por Depay en su Seed — la tercera ronda de pagos cross-border en LATAM este trimestre." Debe ser el dato mas memorable y tuiteable. Si ninguna signal tiene un dato fuerte, omitir esta seccion.]
+
+## [Titulo del Tema 1 — EL MAS IMPORTANTE, desarrollo profundo]
+[3-5 lineas de desarrollo real: que paso concretamente, quien lo hizo, cifras, contexto de la empresa/regulador, por que importa para la industria. Este tema lleva MAS profundidad que los otros. Incluir contexto que el lector no tendria solo con el titular: tamaño de la empresa, mercados donde opera, competidores relevantes, tendencia a la que pertenece.]
 _Fuente: [link]_
 
-## [Titulo del Tema 2]
-[Mismo formato: contexto + relevancia]
-_Fuente: [link]_
+## En el radar
+- **[Titulo corto Tema 2]** — [1-2 lineas compactas con lo esencial: que paso + por que importa, en formato de bullet denso] _([Fuente](url))_
+- **[Titulo corto Tema 3]** — [1-2 lineas compactas. Solo si aporta.] _([Fuente](url))_
 
-## [Titulo del Tema 3 — solo si realmente aporta]
-[Mismo formato]
-_Fuente: [link]_
-
-:mag: *Y esto que significa para el ecosistema?*
-[Un parrafo de 3-5 lineas, denso y observacional, conectando los temas de la semana con tendencias del ecosistema fintech LATAM. NO un resumen de los temas anteriores. Si hay un patron entre los temas, nombralo. Si las noticias apuntan a una tendencia mas amplia (ej. consolidacion de pagos en tiempo real, mayor regulacion de open banking, entrada de jugadores globales), explicala con sustancia. Tono: analista informado que conecta puntos. NUNCA prescriptivo ("deberiamos", "hay que"). NUNCA defensivo ("nos pone en riesgo"). SI observacional ("la convergencia entre X e Y sugiere que..."). Si los temas no se conectan claramente con una tendencia, di poco — vale mas un parrafo corto y honesto que uno largo y forzado.]
+:brain: *Lo que queda dando vueltas*
+[Una pregunta o provocacion estrategica que conecte los temas de la semana. NO es un resumen. NO es prescriptivo ("debemos", "hay que"). Es una observacion que invita a pensar. Formulada como pregunta abierta o como tension sin resolver. Ej: "Brasil y Mexico avanzan hacia open finance por caminos distintos — ¿terminaran convergiendo en un estandar regional, o la fragmentacion sera permanente?" / "El capital sigue fluyendo a infra de pagos, pero nadie esta resolviendo la capa de identidad — ¿quien llena ese vacio?" / "Tres fintechs entraron a Mexico este mes. ¿El mercado esta creciendo, o se esta fragmentando?" Debe generar ganas de responder en el thread. Minimo 40 palabras, idealmente 50-70.]
 
 ---
 _Strategy Intel — Fintoc | [N] fuentes analizadas esta semana_
@@ -100,23 +98,28 @@ Usa este formato exacto con emojis y mrkdwn de Slack:
 :newspaper: *Strategy Intel Weekly — [Tema de la semana]* :newspaper:
 _Semana del [fecha]_
 
-:one: *[Titulo especifico Tema 1 — captura la sustancia]*
-[Linea 1: que paso concretamente, con TODOS los datos que aparezcan en la signal: quien, que hizo, cuando, donde, montos, %, cifras.]
-[Linea 2 — opcional pero recomendada: una sola frase que ubique la noticia en su contexto industrial. NUNCA prescriptiva ("debemos"), NUNCA defensiva ("nos pone en riesgo"). SI observacional ("se suma a la ola de X en LATAM" / "es la tercera ronda Seed de pagos en la region este trimestre"). Solo si aporta — si no, omitela.]
+:bar_chart: *Dato de la semana:* [Una cifra destacada con contexto. Ej: "*US$4M* levantados por Depay en su Seed — la tercera ronda de pagos cross-border en LATAM este trimestre." Si ninguna signal tiene dato fuerte, omitir.]
+
+━━━━━━━━━━━━━━━━━━━━
+
+:pushpin: *[Titulo especifico Tema 1 — EL PRINCIPAL]*
+[3-5 lineas de desarrollo: que paso, quien, cifras, contexto de la empresa/regulador, por que importa. Este tema tiene MAS profundidad que los otros. El lector debe entender la noticia completa sin abrir el link. Incluir contexto que no esta en el titular: tamaño, mercados, competidores, tendencia a la que pertenece. TODOS los datos de la signal. NO INVENTES.]
 <url|:link: Fuente>
 
-:two: *[Titulo especifico Tema 2]*
-[2-3 lineas con datos concretos. NO INVENTES.]
-<url|:link: Fuente>
+━━━━━━━━━━━━━━━━━━━━
 
-:three: *[Titulo especifico Tema 3]*
-[Solo si aporta. 2-3 lineas con datos concretos. NO INVENTES.]
-<url|:link: Fuente>
+:satellite: *En el radar*
+• *[Titulo corto Tema 2]* — [1-2 lineas compactas: que paso + relevancia. Con datos si los hay. NO INVENTES.] <url|:link: Fuente>
+• *[Titulo corto Tema 3]* — [Solo si aporta. 1-2 lineas compactas.] <url|:link: Fuente>
 
-:mag: *Y esto que significa para el ecosistema?*
-[Parrafo OBLIGATORIO de minimo 60 palabras (idealmente 70-100). Observacional y denso. Conecta los temas de la semana con una tendencia mas amplia del ecosistema fintech LATAM. NO resumas los temas anteriores — agrega capa de analisis. Identifica el patron: por que estas noticias estan pasando ahora? Que actores se estan moviendo en la misma direccion? Que arbitraje regulatorio o competitivo se esta abriendo? Sin "debemos" ni "hay que". Sin amenazas. Solo observacion informada.
+━━━━━━━━━━━━━━━━━━━━
 
-Ejemplo del tono buscado (no copies, es ilustrativo): "La coincidencia entre la nueva normativa de open finance en Brasil y los anuncios de Mexico marca un cambio de fase en LATAM: los reguladores estan dejando de mirar el modelo europeo y empiezan a definir reglas propias, mas pragmaticas y menos prescriptivas. En paralelo, el capital semilla sigue fluyendo hacia infra de pagos transfronterizos, lo que sugiere que los inversores apuestan a que la fragmentacion regulatoria sera el negocio de la decada."]
+:brain: *Lo que queda dando vueltas*
+[Una pregunta o provocacion estrategica que conecte los temas de la semana. NO es un resumen de lo anterior. NO es prescriptivo ("debemos", "hay que"). Es una observacion que invita a pensar, formulada como pregunta abierta o tension sin resolver. Debe generar ganas de responder en el thread. Minimo 40 palabras, idealmente 50-70.
+
+Ejemplos del tono buscado (NO copies — son ilustrativos):
+- "Brasil y Mexico avanzan hacia open finance por caminos distintos. ¿Terminaran convergiendo en un estandar regional, o la fragmentacion se convierte en oportunidad para quien conecte ambos mundos?"
+- "El capital sigue fluyendo a infra de pagos, pero la capa de identidad financiera en LATAM sigue sin dueño. ¿Quien la construye primero define las reglas del juego?"]
 
 ---
 :robot_face: _Strategy Intel — Fintoc | [N] fuentes_`;
@@ -131,20 +134,28 @@ export async function generateNewsletter(signals: SignalForNewsletter[]): Promis
     };
   }
 
-  // Mark which signals contain hard data — STRICT version.
-  // Requires real substance: monetary amounts, percentages, large counts, or named multi-token entities with magnitude.
-  // A lonely "89th" or "2026" by itself does NOT qualify.
-  const hasHardData = (text: string) => {
-    if (!text) return false;
+  // Score-based data richness (0-3). >=1 qualifies as "has hard data".
+  // 0 = pure narrative (vague), 1 = some concrete element, 2-3 = strong data.
+  const dataScore = (text: string): number => {
+    if (!text) return 0;
     const t = text.toLowerCase();
-    const monetary = /(us\$|usd|u\$s|\$\s?\d|clp|mxn|brl|cop|pen|ars)\s?\d/.test(t)
-      || /\d+\s?(millon|millones|mil millones|billon|billones|bn|mm)/.test(t);
-    const percent = /\d+([.,]\d+)?\s?%/.test(t);
-    const bigCount = /\d{2,}[.,]?\d*\s?(usuarios|clientes|tarjetas|comercios|empresas|transacciones|operaciones|cuentas|pa[ií]ses|fintechs?)/.test(t);
-    const namedDeal = /(adquir|compr|invierte|invirti|levant|recaud|recauda|raise|funding|serie [a-d]|seed|round)/.test(t)
-      && /\d/.test(t);
-    return monetary || percent || bigCount || namedDeal;
+    let score = 0;
+    // Monetary
+    if (/(us\$|usd|u\$s|\$\s?\d|clp|mxn|brl|cop|pen|ars)\s?\d/.test(t)
+        || /\d+\s?(millon|millones|mil millones|billon|billones|bn|mm)/.test(t)) score++;
+    // Percentage
+    if (/\d+([.,]\d+)?\s?%/.test(t)) score++;
+    // Counts with units
+    if (/\d{2,}[.,]?\d*\s?(usuarios|clientes|tarjetas|comercios|empresas|transacciones|operaciones|cuentas|pa[ií]ses|fintechs?|sucursales)/.test(t)) score++;
+    // Deal verbs with number
+    if (/(adquir|compr|invierte|invirti|levant|recaud|recauda|raise|funding|serie [a-d]|seed|round)/.test(t) && /\d/.test(t)) score++;
+    // Named entity + concrete action (regulator, product launch, official announcement)
+    if (/(banco central|bcb|cnv|cmf|sbs|sbif|condusef|cofece|banxico|bcra|sec|cnbv)/.test(t)) score++;
+    // Specific date markers (months, quarters)
+    if (/(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|q[1-4]\s?20\d{2})/.test(t)) score++;
+    return score;
   };
+  const hasHardData = (text: string) => dataScore(text) >= 1;
 
   const signalsSummary = signals.map((s, i) => {
     const dataRich = hasHardData(s.summary_factual);
@@ -167,19 +178,22 @@ Signal ${i + 1} (id: ${s.id}):
 
   const userMessage = `Genera el newsletter de la semana del ${dateStr}.
 
-Hay ${signals.length} signals curadas. Tu trabajo NO es mencionar todas. Selecciona las 2-3 mas importantes y desarrollalas bien.
+Hay ${signals.length} signals curadas. Tu trabajo NO es mencionar todas. Selecciona 1 tema principal (el mas importante) para desarrollar en profundidad, y 1-2 temas secundarios para "En el radar" (formato bullet compacto).
 
 ${signalsSummary}
 
 INSTRUCCIONES CRITICAS:
-- MAXIMO 3 temas. Si hay 30 signals, igual son maximo 3 temas. Agrupa signals relacionadas bajo un mismo tema SI son realmente del mismo tema. Si son noticias distintas, tratalas por separado.
+- FORMATO "1 GRANDE + 2 RAPIDAS": El tema principal (el mas importante, con mas datos, mas relevancia) va desarrollado en profundidad (3-5 lineas). Los otros 1-2 temas van como bullets compactos en "En el radar" (1-2 lineas cada uno). Agrupa signals relacionadas bajo un mismo tema SI son realmente del mismo tema.
 - Cada tema DEBE tener suficiente contexto para que el lector entienda que paso sin tener que buscar mas informacion.
 - Priorizar signals con impact_level "high" y publicadas esta semana.
 - REGLA DE FECHA — ESTRICTA: Si "Publicado" es mayor a 10 dias antes de hoy, NO la uses como tema principal bajo ninguna circunstancia. Solo puede aparecer como contexto en el parrafo de ecosistema.
 - REGLA DE DATOS — ESTRICTA: Si "Datos duros" dice "NO", esa signal NO puede ser tema principal. Solo se admiten como temas principales signals con "Datos duros: SI".
+- REGLA DE EVENTOS HISTORICOS: Si reconoces que el evento descrito en la signal ocurrio hace mas de 1 año (deals como Visa-YellowPepper 2020, Mastercard-Finicity 2020, Visa-Plaid 2020, Stripe-Bouncer 2021, etc.), DESCARTALA totalmente. Las bases de deals tipo privsource re-indexan adquisiciones viejas como si fueran nuevas — no caigas en la trampa.
 - Priorizar regiones CL y MX. Maximo 1 tema global.
-- El content_slack debe ser compacto (max 3800 chars) pero con contexto suficiente por tema.
-- Es mejor un newsletter corto e informativo que uno largo y vacio.
+- El content_slack debe ser compacto (max 3800 chars). El tema principal lleva profundidad; los del radar son compactos.
+- Incluye "Dato de la semana" al inicio si hay una cifra memorable (monto, %, conteo). Si no hay, omitelo.
+- El cierre "Lo que queda dando vueltas" debe ser una pregunta o provocacion que conecte los temas. NO resumas, NO prescribas. Invita a pensar.
+- Es mejor un newsletter corto y provocador que uno largo y plano.
 
 RECORDATORIO DE TONO — LEE ESTO:
 - NO escribas "debemos", "deberiamos", "tenemos que", "necesitamos", "hay que"
@@ -195,7 +209,7 @@ RECORDATORIO DE DATOS — LEE ESTO:
 - Si una signal es vaga ("Mastercard esta facilitando pagos"), no la rellenes con datos inventados — describela como esta o no la uses como tema principal
 - Mejor un newsletter corto y veridico que uno largo y especulativo
 - Los titulos deben ser ESPECIFICOS, no etiquetas genericas. "Visa compra YellowPepper para entrar a real-time payments" > "Movimientos en LATAM"
-- El parrafo de ecosistema es OBLIGATORIO y debe tener MINIMO 60 palabras (idealmente 70-100). Si tiene menos sera rechazado por validacion. NO resumas los temas — agrega capa de analisis: conecta los puntos, identifica el patron, nombra la tendencia mas amplia.
+- La seccion "Lo que queda dando vueltas" es OBLIGATORIA y debe tener MINIMO 40 palabras (idealmente 50-70). NO es un resumen. Es una pregunta o provocacion que conecta los temas e invita a discutir en el thread. Formulada como pregunta abierta o tension sin resolver.
 - En section_assignments usa SOLO estos 5 valores en "section": "que_paso", "implicancia_fintoc", "competencia", "regulacion", "tendencias". Cualquier otro valor sera rechazado por la base de datos.`;
 
   const response = await callLLM({
@@ -299,19 +313,19 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   });
   if (hasForbiddenLanguage) warnings.push('El newsletter contiene lenguaje prescriptivo o alarmista que deberia ser revisado');
 
-  // Check ecosystem paragraph length — now a hard FAIL (was a warning).
-  const ecosystemMatch = content.content_slack.match(/Y esto que significa para el ecosistema\?\*([\s\S]*?)(?=\n---|\n:robot|$)/i);
-  const ecosystemText = ecosystemMatch ? ecosystemMatch[1].trim() : '';
-  const ecosystemWordCount = ecosystemText.split(/\s+/).filter(Boolean).length;
-  const minEcosystemWords = 60;
-  const ecosystemOk = ecosystemWordCount >= minEcosystemWords;
+  // Check "Lo que queda dando vueltas" closing section — must be substantive and provocative.
+  const closingMatch = content.content_slack.match(/Lo que queda dando vueltas\*([\s\S]*?)(?=\n---|\n:robot|$)/i);
+  const closingText = closingMatch ? closingMatch[1].trim() : '';
+  const closingWordCount = closingText.split(/\s+/).filter(Boolean).length;
+  const minClosingWords = 40;
+  const closingOk = closingWordCount >= minClosingWords;
   checks.push({
-    id: 'ecosystem_paragraph_length',
-    pass: ecosystemOk,
-    level: 'fail',
-    detail: `Parrafo ecosistema: ${ecosystemWordCount} palabras (minimo ${minEcosystemWords})`,
+    id: 'closing_section_length',
+    pass: closingOk,
+    level: 'warn',
+    detail: `Cierre editorial: ${closingWordCount} palabras (minimo ${minClosingWords})`,
   });
-  if (!ecosystemOk) errors.push(`El parrafo de ecosistema tiene ${ecosystemWordCount} palabras. Minimo requerido: ${minEcosystemWords}. Debe ser mas denso y observacional.`);
+  if (!closingOk) warnings.push(`El cierre "Lo que queda dando vueltas" tiene ${closingWordCount} palabras (minimo: ${minClosingWords}). Debe ser una provocacion estrategica que invite a discutir.`);
 
   // Check section_assignments use valid section IDs
   const validSectionIds: Set<string> = new Set(FINTOC_CONTEXT.newsletter.sections.map(s => String(s.id)));
