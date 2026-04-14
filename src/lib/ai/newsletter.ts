@@ -200,7 +200,7 @@ INSTRUCCIONES CRITICAS:
   });
 
   try {
-    const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const cleaned = response.replace(/\`\`\`json\n?/g, '').replace(/\`\`\`\n?/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
     return {
