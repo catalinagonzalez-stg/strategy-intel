@@ -107,7 +107,7 @@ export async function POST(request: Request) {
   }
 
   if (edition.status !== 'validated') {
-          return NextResponse.json({ error: 'Cannot send: status is ' + edition.status }, { status: 400 });
+          return NextResponse.json({ error: `Cannot send: status is ${edition.status}` }, { status: 400 });
   }
 
   const slackToken = process.env.SLACK_BOT_TOKEN;
@@ -141,14 +141,14 @@ export async function POST(request: Request) {
   const res = await fetch('https://slack.com/api/chat.postMessage', {
           method: 'POST',
           headers: {
-                    'Authorization': 'Bearer ' + slackToken,
+                    'Authorization': `Bearer ${slackToken}`,
                     'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ channel: channelId, text: content, mrkdwn: true }),
+          body: JSON.stringify({ channel: channelId, text: content, mrkdwn: true, unfurl_links: false, unfurl_media: false }),
   });
       const result = await res.json();
       if (!result.ok) {
-              return NextResponse.json({ error: 'Slack error: ' + result.error }, { status: 500 });
+              return NextResponse.json({ error: `Slack error: ${result.error}` }, { status: 500 });
       }
 
   await supabase
