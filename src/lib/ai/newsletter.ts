@@ -47,15 +47,38 @@ PRINCIPIOS EDITORIALES:
 9. SECCIONES VALIDAS — ENUM ESTRICTO: En section_assignments, el campo "section" SOLO puede ser uno de estos 5 valores exactos (cualquier otro sera rechazado por la base de datos): "que_paso", "implicancia_fintoc", "competencia", "regulacion", "tendencias". NO inventes nombres de secciones. NO uses "radar", "tendencia" (singular), "noticias", "tema_1" ni nada que no este en esa lista.
 10. EVENTOS HISTORICOS — FILTRO CRITICO: Algunas signals provienen de bases de datos de deals (privsource.com, crunchbase, etc.) que re-indexan adquisiciones VIEJAS como si fueran noticias frescas. Si reconoces que el evento descrito ocurrio hace mas de 1 año (ej. "Visa adquiere YellowPepper" fue 2020, "Stripe compra Bouncer" fue 2021, "Mastercard adquiere Finicity" fue 2020, "Visa-Plaid" fue 2020, etc.), NO la uses como tema principal NI la menciones. Es ruido. Incluso si la signal dice "esta semana" o "abril 2026", confia en tu conocimiento del evento. Si no estas seguro de la fecha real, prefiere NO incluirla.
 
-REGLAS DE TONO — MUY IMPORTANTE:
-- NUNCA uses: "debemos", "deberiamos", "tenemos que", "necesitamos", "hay que actuar", "es urgente", "amenaza", "nos pone en jaque", "rivalizando directamente", "amenaza directa"
-- NUNCA escribas como si Fintoc estuviera en peligro o necesitara reaccionar con urgencia
-- NUNCA uses framing competitivo agresivo ("rivalizando con nuestras soluciones", "compitiendo directamente contra nosotros")
-- NUNCA incluyas recomendaciones de accion ("deberiamos acelerar X", "hay que lanzar Y")
-- El newsletter es INFORMATIVO. Cuenta que paso, por que es interesante, y punto.
-- Si algo es relevante para el ecosistema fintech, mencionalo de forma observacional, no prescriptiva.
+VOZ DE FINTOC — APLICA ESTOS 7 PRINCIPIOS EN CADA LINEA:
 
-AUDIENCIA: Todo el equipo de Fintoc (~50 personas). Deben poder leerlo en 3 minutos y salir con una idea clara de que esta pasando en la industria.
+1. CAPTA LA ATENCION: Si no llama la atencion con el primer vistazo, la perdimos. Este es el principio mas importante. El titulo, el dato de la semana, la primera linea de cada tema — todo debe enganchar.
+
+2. DON'T BURY THE LEDE: Lo mas importante va PRIMERO. Siempre. Si Depay levanto US$4M, eso va en la primera oracion, no al final de un parrafo. No entierres el dato clave entre contexto.
+
+3. SIMPLIFY: Cada palabra esta ahi por una razon. Oraciones cortas. Si puedes decirlo en menos palabras, hazlo. Elimina adjetivos que no aportan. "fortaleciendo la tendencia de fintechs emergentes" = sobra. "tercera ronda Seed de pagos en LATAM este trimestre" = aporta.
+
+4. SHOW, DON'T TELL: Muestra con hechos, datos y numeros. NUNCA con declaraciones marketeras o adjetivos vacios.
+   - MAL: "oportunidades significativas para los jugadores fintech"
+   - MAL: "fortaleciendo su presencia en el mercado de la region"
+   - MAL: "abriendo puertas a colaboraciones estrategicas"
+   - MAL: "redefiniendo las dinamicas de fintech y pagos"
+   - BIEN: "Depay levanto US$4M en Seed para conectar pagos entre Argentina, Chile y Mexico"
+   - BIEN: "BCB publica nuevas reglas de open finance en abril — afectan a 800+ fintechs registradas"
+
+5. EXPLICAME: Da contexto. No asumas que todos saben quien es Shinkansen, que es "principalidad", o que significa open finance. Una frase corta de contexto alcanza.
+
+6. EVITA EL NEGATIVO: No empieces frases con "No", ni con tono alarmista, ni con sensacion de riesgo. Fintoc habla con calma y equilibrio, incluso de cosas importantes.
+
+7. SIN CLICHES NI BUZZWORDS: Evita frases de infomercial. Palabras prohibidas: "revolucion", "innovador", "disruptivo", "dinamico", "lider", "vanguardia", "transformador", "oportunidades significativas", "soluciones integrales", "ecosistema en crecimiento". Si suena a post de LinkedIn generico, reescribelo.
+
+TONO FINTOC:
+- Formal pero no rigido. Cercano, nunca de "usted".
+- Mas serio que jugueton. Algun emoji para desaplanar, con medida.
+- Apasionado pero calmado. Transmite con equilibrio, no con urgencia.
+- Rebelde por dentro, mesurado por fuera. Cuando hay opinion, va con fundamento.
+- NUNCA en primera persona ("creo", "me parece", "nos preguntamos"). Lo envia una app, no una persona.
+- NUNCA prescriptivo ("debemos", "deberiamos", "hay que", "tenemos que", "necesitamos").
+- NUNCA alarmista ("amenaza", "urgente", "nos pone en jaque", "rivalizando directamente").
+
+AUDIENCIA: Todo el equipo de Fintoc (~50 personas). Deben poder escanearlo en 30 segundos y leerlo en profundidad en 3 minutos. Cada frase tiene que ganarse su lugar.
 
 Secciones disponibles para section_assignments:
 ${SECTIONS}
@@ -86,7 +109,13 @@ _Fuente: [link]_
 - **[Titulo corto Tema 3]** — [1-2 lineas compactas. Solo si aporta.] _([Fuente](url))_
 
 :brain: *Lo que queda dando vueltas*
-[Una pregunta o provocacion estrategica que conecte los temas de la semana. NO es un resumen. NO es prescriptivo ("debemos", "hay que"). Es una observacion que invita a pensar. Formulada como pregunta abierta o como tension sin resolver. Ej: "Brasil y Mexico avanzan hacia open finance por caminos distintos — ¿terminaran convergiendo en un estandar regional, o la fragmentacion sera permanente?" / "El capital sigue fluyendo a infra de pagos, pero nadie esta resolviendo la capa de identidad — ¿quien llena ese vacio?" / "Tres fintechs entraron a Mexico este mes. ¿El mercado esta creciendo, o se esta fragmentando?" Debe generar ganas de responder en el thread. Minimo 40 palabras, idealmente 50-70.]
+[Una pregunta o provocacion que conecte los temas. REGLAS ESTRICTAS:
+- NO empieces resumiendo ("La inversion en X y la entrada de Y resaltan..." = PROHIBIDO. Eso es resumen, no provocacion).
+- EMPIEZA directo con la tension o pregunta. Lede primero.
+- Nombra actores especificos, no categorias genericas ("Colombia le pide a Brasil abrir Pix" > "los paises avanzan hacia la cooperacion").
+- Formula como tension sin resolver o pregunta con dientes. "¿como impactaran estas iniciativas?" = demasiado generico. "Colombia quiere Pix regional, pero Brasil nunca ha abierto su infra domestica. ¿Que le haria cambiar de opinion?" = especifico y provocador.
+- NO uses cliches: "plantea preguntas interesantes", "resaltan la creciente importancia", "convergencia regulatoria" sin explicar que significa concretamente.
+- Minimo 40 palabras. Debe generar ganas de responder en el thread.]
 
 ---
 _Strategy Intel — Fintoc | [N] fuentes analizadas esta semana_
@@ -195,13 +224,13 @@ INSTRUCCIONES CRITICAS:
 - El cierre "Lo que queda dando vueltas" debe ser una pregunta o provocacion que conecte los temas. NO resumas, NO prescribas. Invita a pensar.
 - Es mejor un newsletter corto y provocador que uno largo y plano.
 
-RECORDATORIO DE TONO — LEE ESTO:
-- NO escribas "debemos", "deberiamos", "tenemos que", "necesitamos", "hay que"
-- NO escribas como si algo fuera una amenaza o emergencia
-- NO hagas recomendaciones de accion
-- NO uses "Para nosotros" ni "nuestras soluciones" ni "rivalizando directamente"
-- SI escribe de forma informativa, interesante y observacional
-- Imagina que le estas contando noticias interesantes a un amigo que trabaja en fintech. Informas, no alarmas.
+RECORDATORIO DE VOZ FINTOC — LEE ESTO:
+- CAPTA LA ATENCION: ¿La primera linea de cada tema engancha? Si no, reescribela.
+- DON'T BURY THE LEDE: El dato mas importante va en la PRIMERA oracion de cada tema. No al final.
+- SIMPLIFY: Lee cada oracion. ¿Puedes decirlo en menos palabras? Hazlo. Elimina adjetivos vacios.
+- SHOW DON'T TELL: Hechos y cifras, NO adjetivos marketeros. "oportunidades significativas" = PROHIBIDO. "US$4M Seed" = CORRECTO.
+- NO primera persona. NO prescriptivo. NO alarmista. NO buzzwords.
+- CLICHES PROHIBIDOS: "oportunidades significativas", "fortaleciendo su presencia", "abriendo puertas", "redefiniendo las dinamicas", "ecosistema en crecimiento", "jugadores fintech", "soluciones integradas/integrales", "presencia en el mercado de la region", "colaboraciones estrategicas". Si una frase suena a LinkedIn generico, reescribela con datos concretos o eliminala.
 
 RECORDATORIO DE DATOS — LEE ESTO:
 - NUNCA inventes cifras, montos, porcentajes, fechas o nombres que no esten en las signals
@@ -312,6 +341,17 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
     detail: hasForbiddenLanguage ? 'Contiene lenguaje prescriptivo o alarmista' : 'Tono correcto',
   });
   if (hasForbiddenLanguage) warnings.push('El newsletter contiene lenguaje prescriptivo o alarmista que deberia ser revisado');
+
+  // Check for buzzwords/clichés (Fintoc voice guidelines)
+  const buzzwordPatterns = /oportunidades significativas|fortaleciendo su presencia|abriendo puertas|redefiniendo las din[aá]micas|ecosistema en crecimiento|soluciones integrales|soluciones integradas|colaboraciones estrat[eé]gicas|jugadores fintech|presencia en el mercado de la regi[oó]n/gi;
+  const hasBuzzwords = buzzwordPatterns.test(content.content_slack);
+  checks.push({
+    id: 'no_buzzwords',
+    pass: !hasBuzzwords,
+    level: 'warn',
+    detail: hasBuzzwords ? 'Contiene cliches o buzzwords (voz Fintoc)' : 'Sin cliches detectados',
+  });
+  if (hasBuzzwords) warnings.push('El newsletter contiene frases cliche que no van con la voz de Fintoc. Revisar: oportunidades significativas, fortaleciendo su presencia, abriendo puertas, etc.');
 
   // Check "Lo que queda dando vueltas" closing section — must be substantive and provocative.
   const closingMatch = content.content_slack.match(/Lo que queda dando vueltas\*([\s\S]*?)(?=\n---|\n:robot|$)/i);
