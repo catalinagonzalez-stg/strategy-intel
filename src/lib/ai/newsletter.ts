@@ -77,6 +77,8 @@ TONO FINTOC:
 - NUNCA en primera persona ("creo", "me parece", "nos preguntamos"). Lo envia una app, no una persona.
 - NUNCA prescriptivo ("debemos", "deberiamos", "hay que", "tenemos que", "necesitamos").
 - NUNCA alarmista ("amenaza", "urgente", "nos pone en jaque", "rivalizando directamente").
+- NUNCA menciones a Fintoc en el cuerpo de las noticias. El newsletter NO dice "esto podria afectar a Fintoc", "estrategias de entrada para empresas como Fintoc", "guiar los esfuerzos de Fintoc". El newsletter informa sobre la INDUSTRIA, no sobre Fintoc. Fintoc solo aparece en el footer ("Strategy Intel — Fintoc").
+- NUNCA uses frases vacias tipo "esto podria influir en el desarrollo de nuevos productos" o "esta iniciativa podria guiar esfuerzos". Si no tienes datos concretos sobre el impacto, no lo menciones. Show don't tell.
 
 AUDIENCIA: Todo el equipo de Fintoc (~50 personas). Deben poder escanearlo en 30 segundos y leerlo en profundidad en 3 minutos. Cada frase tiene que ganarse su lugar.
 
@@ -230,7 +232,8 @@ RECORDATORIO DE VOZ FINTOC — LEE ESTO:
 - SIMPLIFY: Lee cada oracion. ¿Puedes decirlo en menos palabras? Hazlo. Elimina adjetivos vacios.
 - SHOW DON'T TELL: Hechos y cifras, NO adjetivos marketeros. "oportunidades significativas" = PROHIBIDO. "US$4M Seed" = CORRECTO.
 - NO primera persona. NO prescriptivo. NO alarmista. NO buzzwords.
-- CLICHES PROHIBIDOS: "oportunidades significativas", "fortaleciendo su presencia", "abriendo puertas", "redefiniendo las dinamicas", "ecosistema en crecimiento", "jugadores fintech", "soluciones integradas/integrales", "presencia en el mercado de la region", "colaboraciones estrategicas". Si una frase suena a LinkedIn generico, reescribela con datos concretos o eliminala.
+- CLICHES PROHIBIDOS: "oportunidades significativas", "fortaleciendo su presencia", "abriendo puertas", "redefiniendo las dinamicas", "ecosistema en crecimiento", "jugadores fintech", "soluciones integradas/integrales", "presencia en el mercado de la region", "colaboraciones estrategicas", "cambiar el panorama", "nuevos jugadores", "empresas establecidas", "esto podria influir", "guiar los esfuerzos". Si una frase suena a LinkedIn generico, reescribela con datos concretos o eliminala.
+- FINTOC NO SE MENCIONA EN EL CUERPO: Nunca escribas "empresas como Fintoc", "esto afecta a Fintoc", "para Fintoc esto significa". El newsletter cubre la industria, no a Fintoc.
 
 RECORDATORIO DE DATOS — LEE ESTO:
 - NUNCA inventes cifras, montos, porcentajes, fechas o nombres que no esten en las signals
@@ -343,7 +346,7 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   if (hasForbiddenLanguage) warnings.push('El newsletter contiene lenguaje prescriptivo o alarmista que deberia ser revisado');
 
   // Check for buzzwords/clichés (Fintoc voice guidelines)
-  const buzzwordPatterns = /oportunidades significativas|fortaleciendo su presencia|abriendo puertas|redefiniendo las din[aá]micas|ecosistema en crecimiento|soluciones integrales|soluciones integradas|colaboraciones estrat[eé]gicas|jugadores fintech|presencia en el mercado de la regi[oó]n/gi;
+  const buzzwordPatterns = /oportunidades significativas|fortaleciendo su presencia|abriendo puertas|redefiniendo las din[aá]micas|ecosistema en crecimiento|soluciones integrales|soluciones integradas|colaboraciones estrat[eé]gicas|jugadores fintech|presencia en el mercado de la regi[oó]n|cambiar el panorama|nuevos jugadores|empresas establecidas|esto podr[ií]a influir|guiar los esfuerzos|empresas como fintoc|esto afecta a fintoc|para fintoc esto/gi;
   const hasBuzzwords = buzzwordPatterns.test(content.content_slack);
   checks.push({
     id: 'no_buzzwords',
