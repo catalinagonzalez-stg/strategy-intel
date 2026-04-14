@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { generateNewsletter, validateNewsletter } from '@/lib/ai/newsletter';
+import { generateNewsletter, validateNewsletter, type NewsletterContext } from '@/lib/ai/newsletter';
 
 /**
  * POST /api/generate-newsletter
@@ -17,12 +17,8 @@ export async function POST() {
   try {
     const supabase = createServiceClient();
 
-    // 1. Fetch unassigned signals (only those published in the last 10 days — older ones are stale)
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-    const cutoffIso = tenDaysAgo.toISOString();
-
-    const { data: allSignals, error: signalsErr } = await supabase
+    // 1. Fetch unassigned signals
+    const { data: signals, error: signalsErr } = await supabase
       .from('signals')
       .select('*')
       .is('edition_id', null)
@@ -32,7 +28,7 @@ export async function POST() {
       return NextResponse.json({ error: `Failed to fetch signals: ${signalsErr.message}` }, { status: 500 });
     }
 
-    if (!allSignals || allSignals.length === 0) {
+    if (!signals || signals.length === 0) {
       return NextResponse.json({
         ok: true,
         message: 'No unassigned signals to build newsletter from. Run "Curate weekly" first.',
@@ -40,26 +36,7 @@ export async function POST() {
       });
     }
 
-    // Filter: only signals published in the last 10 days go to the LLM.
-    // Stale signals still get assigned to this edition so they stop appearing as "unassigned",
-    // but they don't influence newsletter content.
-    const signals = allSignals.filter((s: any) => {
-      if (!s.supporting_published_at) return true;
-      return s.supporting_published_at >= cutoffIso;
-    });
-    const staleSignalIds = allSignals
-      .filter((s: any) => !signals.find((x: any) => x.id === s.id))
-      .map((s: any) => s.id);
-
-    console.log(`[generate-newsletter] Found ${allSignals.length} unassigned signals (${signals.length} fresh <=10d, ${staleSignalIds.length} stale dropped)`);
-
-    if (signals.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        message: `No fresh signals (<=10 days old). ${staleSignalIds.length} stale signals skipped.`,
-        edition_id: null,
-      });
-    }
+    console.log(`[generate-newsletter] Found ${signals.length} unassigned signals`);
 
     // 2. Get next edition number
     const { data: lastEdition } = await supabase
@@ -88,32 +65,35 @@ export async function POST() {
 
     console.log(`[generate-newsletter] Created draft edition #${nextNumber} (${edition.id})`);
 
+    // 3.5. Build context: fetch recent edition topics to avoid repetition
+    const newsletterContext: NewsletterContext = {};
+    try {
+      const { data: recentEditions } = await supabase
+        .from('newsletter_editions')
+        .select('tema_semana, edition_date')
+        .in('status', ['validated', 'sent'])
+        .order('edition_date', { ascending: false })
+        .limit(4);
+
+      if (recentEditions && recentEditions.length > 0) {
+        newsletterContext.recentTopics = recentEditions
+          .map((e: any) => `${e.edition_date}: ${e.tema_semana}`)
+          .filter((t: string) => t.length > 10);
+        console.log(`[generate-newsletter] Found ${newsletterContext.recentTopics.length} recent topics for dedup`);
+      }
+    } catch (err) {
+      console.warn('[generate-newsletter] Could not fetch recent topics:', err);
+    }
+
     // 4. Generate newsletter content with Claude
-    const newsletterContent = await generateNewsletter(signals);
+    const newsletterContent = await generateNewsletter(signals, newsletterContext);
 
     // 5. Validate
     const validation = validateNewsletter(newsletterContent, signals.length);
 
     // 6. Insert newsletter_items for section assignments
     // The LLM may return signal_ids that don't exactly match (truncated, etc.)
-    // So we match by finding the closest signal, and skip unmatched assignments.
-    // Also: coerce LLM-invented section names to the valid enum to avoid the
-    // newsletter_items_section_check constraint silently rejecting inserts.
-    const VALID_SECTIONS = new Set(['que_paso', 'implicancia_fintoc', 'competencia', 'regulacion', 'tendencias']);
-    const coerceSection = (sec: string, signalType: string | null) => {
-      if (VALID_SECTIONS.has(sec)) return sec;
-      // Common LLM mistakes — map to closest valid section
-      if (sec === 'tendencia' || sec === 'tendencies' || sec === 'trend' || sec === 'trends') return 'tendencias';
-      if (sec === 'radar' || sec === 'competition' || sec === 'competidores') return 'competencia';
-      if (sec === 'regulation' || sec === 'compliance') return 'regulacion';
-      if (sec === 'summary' || sec === 'resumen' || sec === 'que_pasa') return 'que_paso';
-      if (sec === 'fintoc' || sec === 'implicancia') return 'implicancia_fintoc';
-      // Fallback by signal type
-      if (signalType === 'competition') return 'competencia';
-      if (signalType === 'regulation') return 'regulacion';
-      return 'tendencias';
-    };
-
+    // So we match by finding the closest signal, and skip unmatched assignments
     if (newsletterContent.section_assignments.length > 0) {
       const items = newsletterContent.section_assignments
         .map(sa => {
@@ -126,15 +106,11 @@ export async function POST() {
             console.warn(`[generate-newsletter] No matching signal for assignment: ${sa.signal_id}`);
             return null;
           }
-          const safeSection = coerceSection(sa.section, signal.signal_type);
-          if (safeSection !== sa.section) {
-            console.warn(`[generate-newsletter] Coerced invalid section "${sa.section}" -> "${safeSection}"`);
-          }
           return {
             edition_id: edition.id,
             signal_id: signal.id, // Use the actual signal ID, not the LLM's version
             article_id: signal.article_id || null,
-            section: safeSection,
+            section: sa.section,
             sort_order: sa.sort_order,
             editorial_text: signal.summary_factual + (signal.fintoc_implication ? ` — ${signal.fintoc_implication}` : ''),
             supporting_url: signal.supporting_url || '',
@@ -158,8 +134,7 @@ export async function POST() {
         }
       }
 
-      // Also insert items for signals NOT assigned by the LLM (to ensure all signals appear).
-      // Using only valid section IDs from the enum.
+      // Also insert items for signals NOT assigned by the LLM (to ensure all signals appear)
       const assignedSignalIds = new Set(items.map((it: any) => it?.signal_id));
       const unassignedItems = signals
         .filter((s: any) => !assignedSignalIds.has(s.id))
@@ -167,7 +142,7 @@ export async function POST() {
           edition_id: edition.id,
           signal_id: s.id,
           article_id: s.article_id || null,
-          section: coerceSection('', s.signal_type),
+          section: s.signal_type === 'competition' ? 'radar' : 'tendencia',
           sort_order: 100 + idx,
           editorial_text: s.summary_factual + (s.fintoc_implication ? ` — ${s.fintoc_implication}` : ''),
           supporting_url: s.supporting_url || '',
@@ -207,8 +182,8 @@ export async function POST() {
       console.error(`[generate-newsletter] Error updating edition: ${updateErr.message}`);
     }
 
-    // 8. Update signals with edition_id (both fresh and stale, so stale ones don't pile up)
-    const signalIds = [...signals.map((s: any) => s.id), ...staleSignalIds];
+    // 8. Update signals with edition_id
+    const signalIds = signals.map((s: any) => s.id);
     const { error: signalUpdateErr } = await supabase
       .from('signals')
       .update({ edition_id: edition.id })
