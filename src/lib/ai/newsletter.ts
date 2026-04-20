@@ -37,10 +37,19 @@ Tu trabajo es escribir un MEMO ESTRATEGICO semanal, NO un resumen de noticias.
 
 PRINCIPIOS EDITORIALES:
 1. FOCO > COBERTURA: Maximo 2-3 temas bien desarrollados. Nunca mas de 3. Es mejor profundidad que amplitud.
-2. DATOS DUROS: Cada afirmacion debe tener un numero, monto, porcentaje o metrica. "Visa se expandio" NO sirve. "Visa adquirio Prisma por USD 1.2B, sumando 40M tarjetas en Argentina" SI sirve.
-3. OPINION CON FUNDAMENTO: No describas, interpreta. Di lo que crees que significa para Fintoc y que deberian hacer. Toma posicion.
-4. PREGUNTAS QUE PROVOQUEN: Cada tema termina con una pregunta estrategica que obligue al equipo a pensar. No preguntas genericas ("que opinas?") sino especificas ("Deberiamos acelerar la integracion con X antes de que Y cierre el deal en MX?")
-5. ALERTAS URGENTES: Si hay algo critico (regulacion, movimiento de competidor directo), va primero como alerta de 2-3 lineas.
+2. DATOS DUROS OBLIGATORIOS: Si un tema NO tiene al menos un dato concreto (monto USD, porcentaje, cantidad de usuarios, fecha de implementacion, volumen de transacciones), NO PUEDE SER TEMA. Descartalo y elige otro. "Visa se expandio" NO sirve. "Visa adquirio Prisma por USD 1.2B, sumando 40M tarjetas en Argentina" SI sirve. Sin numero = sin tema.
+3. INTERPRETACION SIN PRESCRIPCION: Interpreta que significan los hechos, pero NUNCA digas que "debemos", "necesitamos", "tenemos que" hacer algo. No des ordenes. Presenta hechos y deja que el lector piense. BIEN: "Esto pone presion sobre el A2A en Chile." MAL: "Necesitamos robustecer nuestros sistemas."
+4. SIN PREGUNTAS POR TEMA: NO pongas preguntas al final de cada noticia. La unica pregunta del newsletter va en "Lo que queda dando vueltas" al final.
+5. RELEVANCIA REAL: Solo temas que impacten DIRECTAMENTE a los mercados activos (Chile y Mexico). Brasil, Peru, Colombia son contexto secundario — solo si la noticia tiene impacto directo en CL o MX. "BTG se expande a Peru" NO es tema a menos que afecte directamente a un producto de Fintoc en CL/MX.
+6. MAPEO COMPETITIVO CORRECTO: NO inventes conexiones competitivas. Pluxee integrando con Transbank es un tema de beneficios corporativos y terminales POS, NO es competencia de Smart Checkout. Entiende que hace cada competidor antes de conectarlo con un producto de Fintoc. Si no hay conexion clara, no la fuerces.
+
+LENGUAJE PROHIBIDO (si usas estas frases, el newsletter falla validacion):
+- "necesitamos", "debemos", "tenemos que", "hay que" (prescriptivo)
+- "exige que reaccionemos", "nos obliga a" (alarmista)
+- "robustecer", "fortalecer nuestra posicion" (vacio)
+- "explorar alianzas estrategicas" (consultoria generica)
+- "innovaciones en seguridad" (buzzword)
+- Cualquier oracion que suene a recomendacion de consultora
 
 AUDIENCIA: Todo el equipo de Fintoc (~50 personas). Deben poder leerlo en 3 minutos y salir con una idea clara de "que esta pasando y por que nos importa".
 
@@ -65,15 +74,14 @@ _Semana del [fecha]_
 [SI HAY ALERTA URGENTE: 2-3 lineas marcadas con 🚨 sobre regulacion o movimiento critico de competidor]
 
 ## [Titulo del Tema 1 — con angulo, no descriptivo]
-**Que paso:** [Parrafo corto con datos duros: montos, porcentajes, fechas, nombres]
-**Por que importa:** [Interpretacion para Fintoc. Toma posicion. "Esto significa que..." "Esto abre la puerta a..." "El riesgo es que..."]
-**Pregunta para el equipo:** [Pregunta estrategica especifica que obligue a pensar]
+**Que paso:** [Parrafo con datos duros: montos, porcentajes, fechas, nombres. SIN DATOS = NO ES TEMA.]
+**Por que importa:** [Interpretacion. "Esto significa que..." "Esto pone presion sobre..." "El riesgo es que..." NUNCA "debemos" ni "necesitamos".]
 _Fuente: [link]_
 
 ## [Titulo del Tema 2]
-[Mismo formato]
+[Mismo formato: que paso con datos + por que importa sin prescripcion]
 
-## [Titulo del Tema 3 — solo si realmente aporta]
+## [Titulo del Tema 3 — solo si realmente aporta y tiene datos]
 [Mismo formato]
 
 ---
@@ -106,12 +114,11 @@ _Semana del [fecha]_
 ━━━━━━━━━━━━━━━━━━━━
 
 [EMOJI] *[Titulo corto y con angulo]*
-[1-2 oraciones de que paso, con datos duros]
-:arrow_right: *Para nosotros:* [Interpretacion directa, toma de posicion, 1-2 oraciones]
-:question: _[Pregunta estrategica especifica para el equipo]_
+[1-2 oraciones de que paso, con datos duros concretos]
+:arrow_right: *Para nosotros:* [Interpretacion directa, 1-2 oraciones. SIN "debemos/necesitamos/tenemos que".]
 
 [EMOJI] *[Titulo tema 2]*
-[Mismo patron]
+[Mismo patron: datos + interpretacion sin prescripcion]
 
 [EMOJI tema 3 si aplica]
 [Mismo patron]
@@ -182,16 +189,19 @@ ${signalsSummary}
 
 INSTRUCCIONES CRITICAS:
 - MAXIMO 3 temas. Si hay 30 signals, igual son maximo 3 temas. Agrupa signals relacionadas bajo un mismo tema.
-- Cada tema DEBE tener datos duros (montos, %, cifras). Si una signal no tiene datos, busca en el contexto o mencionalo como limitacion.
+- Si una signal NO tiene datos duros (USD, %, cantidad, fecha concreta), DESCARTALA como tema principal. Prefiere siempre la signal con mas datos.
 - Priorizar signals con impact_level "high" y publicadas esta semana.
 - Si una signal tiene fecha > 10 dias, NO usarla como tema principal. Puede ser contexto.
-- Priorizar regiones CL y MX. Maximo 1 tema global.
-- Las preguntas estrategicas deben ser ESPECIFICAS a Fintoc. No "que opinan?" sino "Deberiamos lanzar X en MX antes de Q3?"
-- El content_slack es el PRODUCTO MAS IMPORTANTE. Debe dar ganas de leerlo en Slack. Sigue el template exacto con TL;DR, emojis, y preguntas destacadas.
-- Tono del content_slack: como un colega senior contandote algo urgente, no un analista presentando un informe. Oraciones cortas. "Nos" y "nosotros" para Fintoc.
-- La primera linea del content_slack DEBE ser un gancho que genere curiosidad o urgencia.
+- SOLO temas que impacten Chile o Mexico directamente. Brasil/Peru/Colombia solo como contexto secundario, nunca como tema principal.
+- NO pongas preguntas al final de cada tema. La UNICA pregunta va en "Lo que queda dando vueltas".
+- NUNCA uses lenguaje prescriptivo: "necesitamos", "debemos", "tenemos que", "hay que". Interpreta, no ordenes.
+- NO inventes conexiones competitivas falsas. Si un evento no tiene relacion directa con un producto de Fintoc, no lo fuerces. Ejemplo: Pluxee con Transbank es POS/beneficios, NO tiene que ver con Smart Checkout.
+- El content_slack es el PRODUCTO MAS IMPORTANTE. Debe dar ganas de leerlo en Slack. Sigue el template exacto.
+- Tono del content_slack: como un colega senior contandote algo en el pasillo, no un consultor dando recomendaciones. Oraciones cortas. "Nos" y "nosotros" para Fintoc.
+- La primera linea del content_slack DEBE ser un gancho que genere curiosidad.
 - content_slack max 3800 chars.
-- Es mejor un memo corto y denso que uno largo y vacio.`;
+- Es mejor un memo corto y denso que uno largo y vacio.
+- NUNCA menciones "Fintoc" por nombre en el cuerpo del newsletter. Usa "nosotros/nos". Solo se menciona en el footer.`;
 
   const response = await callLLM({
     system: SYSTEM_PROMPT,
@@ -253,15 +263,17 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   });
   if (!hasTopics) errors.push(`Minimo ${minTopics} temas desarrollados requeridos`);
 
-  // Check strategic structure (each topic should have key elements)
-  const hasStrategicQuestions = (content.content_md.match(/Pregunta para el equipo/gi) || []).length >= minTopics;
+  // Check for prescriptive language (should NOT be present)
+  const prescriptivePatterns = /\b(necesitamos|debemos|tenemos que|hay que|nos obliga a|exige que)\b/gi;
+  const prescriptiveMatches = content.content_slack?.match(prescriptivePatterns) || [];
+  const noPrescriptive = prescriptiveMatches.length === 0;
   checks.push({
-    id: 'strategic_questions',
-    pass: hasStrategicQuestions,
+    id: 'no_prescriptive',
+    pass: noPrescriptive,
     level: 'warn',
-    detail: hasStrategicQuestions ? 'Preguntas estrategicas presentes' : 'Faltan preguntas estrategicas',
+    detail: noPrescriptive ? 'Sin lenguaje prescriptivo' : `Lenguaje prescriptivo detectado: ${prescriptiveMatches.join(', ')}`,
   });
-  if (!hasStrategicQuestions) warnings.push('Algunos temas no tienen pregunta estrategica');
+  if (!noPrescriptive) warnings.push(`Lenguaje prescriptivo encontrado: ${prescriptiveMatches.join(', ')}`);
 
   // Check content exists
   const hasContent = content.content_md.length > 200;
