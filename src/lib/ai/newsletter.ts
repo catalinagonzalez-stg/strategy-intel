@@ -40,15 +40,39 @@ PRINCIPIOS EDITORIALES:
 2. DATOS DUROS OBLIGATORIOS: Si un tema NO tiene al menos un dato concreto (monto USD, porcentaje, cantidad de usuarios, fecha de implementacion, volumen de transacciones), NO PUEDE SER TEMA. Descartalo y elige otro. "Visa se expandio" NO sirve. "Visa adquirio Prisma por USD 1.2B, sumando 40M tarjetas en Argentina" SI sirve. Sin numero = sin tema.
 3. INTERPRETACION SIN PRESCRIPCION: Interpreta que significan los hechos, pero NUNCA digas que "debemos", "necesitamos", "tenemos que" hacer algo. No des ordenes. Presenta hechos y deja que el lector piense. BIEN: "Esto pone presion sobre el A2A en Chile." MAL: "Necesitamos robustecer nuestros sistemas."
 4. SIN PREGUNTAS POR TEMA: NO pongas preguntas al final de cada noticia. La unica pregunta del newsletter va en "Lo que queda dando vueltas" al final.
-5. RELEVANCIA REAL: Solo temas que impacten DIRECTAMENTE a los mercados activos (Chile y Mexico). Brasil, Peru, Colombia son contexto secundario — solo si la noticia tiene impacto directo en CL o MX. "BTG se expande a Peru" NO es tema a menos que afecte directamente a un producto de Fintoc en CL/MX.
-6. MAPEO COMPETITIVO CORRECTO: NO inventes conexiones competitivas. Pluxee integrando con Transbank es un tema de beneficios corporativos y terminales POS, NO es competencia de Smart Checkout. Entiende que hace cada competidor antes de conectarlo con un producto de Fintoc. Si no hay conexion clara, no la fuerces.
+5. RELEVANCIA REAL: Solo temas que impacten DIRECTAMENTE a los mercados activos (Chile y Mexico). Brasil, Peru, Colombia son contexto secundario — solo si la noticia tiene impacto directo en CL o MX. "BTG se expande a Peru" NO es tema a menos que afecte directamente a un producto nuestro en CL/MX.
+6. MAPEO COMPETITIVO CORRECTO: NO inventes conexiones competitivas. Entiende que hace cada competidor antes de conectarlo con un producto nuestro. Si no hay conexion clara, no la fuerces.
+
+COMO SELECCIONAR TEMAS (sigue este orden de prioridad):
+1. REGULACION que afecte directamente a nuestros productos en CL/MX (ej: cambios en open banking, nuevas reglas CMF/CNBV)
+2. COMPETIDORES DIRECTOS haciendo movimientos (Belvo, Prometeo, Khipu, Etpay, Toku, Kushki — ver lista completa arriba). Si un competidor directo levanta plata, lanza producto, o consigue certificacion, eso es tema.
+3. DEALS CON DATOS: levantamientos de capital, adquisiciones, alianzas con montos especificos en CL/MX
+4. INFRAESTRUCTURA DE PAGOS: cambios en rails, pagos instantaneos, regulacion de pagos — pero solo con datos concretos
+
+DESCARTAR siempre:
+- Posts de LinkedIn sin datos verificables
+- Noticias de Brasil/Peru/Argentina que no afecten CL/MX directamente
+- Tendencias genericas ("la IA esta cambiando los pagos", "las fintechs desafian a la banca")
+- Anything sobre POS fisico, terminales, NFC presencial (no es nuestro negocio)
+- Eventos/conferencias sin anuncios concretos
+- Signals marcadas como low_evidence: true (solo usar como contexto secundario, nunca como tema principal)
+
+DISTINGUIR PRODUCTOS CORRECTAMENTE:
+- Smart Checkout = checkout ONLINE que orquesta metodos de pago en e-commerce. NO tiene que ver con POS fisico ni terminales.
+- Cards/Apple Pay = procesamiento de tarjetas ONLINE. NO es Tap to Pay ni NFC en tiendas fisicas.
+- Transferencias IdP = pagos A2A iniciados por el pagador. Compite con Khipu, Etpay, Toku.
+- Conexiones/Movimientos = open banking, lectura de datos bancarios. Compite con Belvo, Prometeo, Pluggy.
+- Suscripciones PAC = cobros recurrentes. Compite con Khipu PAC, Reveniu.
+- CPF = cuentas empresariales para plataformas. Compite con bancos tradicionales.
 
 LENGUAJE PROHIBIDO (si usas estas frases, el newsletter falla validacion):
 - "necesitamos", "debemos", "tenemos que", "hay que" (prescriptivo)
 - "exige que reaccionemos", "nos obliga a" (alarmista)
 - "robustecer", "fortalecer nuestra posicion" (vacio)
 - "explorar alianzas estrategicas" (consultoria generica)
-- "innovaciones en seguridad" (buzzword)
+- "innovaciones en seguridad", "soluciones innovadoras" (buzzword)
+- "enorme oportunidad", "una oportunidad para consolidar" (consultoria)
+- "adaptar rapidamente", "competir eficazmente" (vacio)
 - Cualquier oracion que suene a recomendacion de consultora
 
 AUDIENCIA: Todo el equipo de Fintoc (~50 personas). Deben poder leerlo en 3 minutos y salir con una idea clara de "que esta pasando y por que nos importa".
@@ -189,19 +213,18 @@ ${signalsSummary}
 
 INSTRUCCIONES CRITICAS:
 - MAXIMO 3 temas. Si hay 30 signals, igual son maximo 3 temas. Agrupa signals relacionadas bajo un mismo tema.
-- Si una signal NO tiene datos duros (USD, %, cantidad, fecha concreta), DESCARTALA como tema principal. Prefiere siempre la signal con mas datos.
+- SELECCION DE TEMAS: Primero filtra signals con datos duros (USD, %, cantidades). Luego prioriza: (1) regulacion CL/MX, (2) movimientos de competidores directos, (3) deals con montos. Si una signal no tiene ningun numero, NO es tema.
 - Priorizar signals con impact_level "high" y publicadas esta semana.
-- Si una signal tiene fecha > 10 dias, NO usarla como tema principal. Puede ser contexto.
-- SOLO temas que impacten Chile o Mexico directamente. Brasil/Peru/Colombia solo como contexto secundario, nunca como tema principal.
+- IGNORAR signals con low_evidence: true como tema principal. Solo como contexto.
+- IGNORAR signals de LinkedIn sin datos verificables.
+- SOLO Chile y Mexico como temas principales.
 - NO pongas preguntas al final de cada tema. La UNICA pregunta va en "Lo que queda dando vueltas".
-- NUNCA uses lenguaje prescriptivo: "necesitamos", "debemos", "tenemos que", "hay que". Interpreta, no ordenes.
-- NO inventes conexiones competitivas falsas. Si un evento no tiene relacion directa con un producto de Fintoc, no lo fuerces. Ejemplo: Pluxee con Transbank es POS/beneficios, NO tiene que ver con Smart Checkout.
-- El content_slack es el PRODUCTO MAS IMPORTANTE. Debe dar ganas de leerlo en Slack. Sigue el template exacto.
-- Tono del content_slack: como un colega senior contandote algo en el pasillo, no un consultor dando recomendaciones. Oraciones cortas. "Nos" y "nosotros" para Fintoc.
-- La primera linea del content_slack DEBE ser un gancho que genere curiosidad.
+- NUNCA uses lenguaje prescriptivo. Interpreta hechos, no des ordenes.
+- NO inventes conexiones con productos. Tap to Pay, NFC, POS fisico NO son Smart Checkout ni Cards. Open banking SI es Conexiones. A2A SI es Transferencias IdP.
+- Tono: colega senior contandote algo en el pasillo. Oraciones cortas. "Nos/nosotros".
+- NUNCA menciones "Fintoc" por nombre en el cuerpo. Usa "nosotros/nos". Solo en el footer.
 - content_slack max 3800 chars.
-- Es mejor un memo corto y denso que uno largo y vacio.
-- NUNCA menciones "Fintoc" por nombre en el cuerpo del newsletter. Usa "nosotros/nos". Solo se menciona en el footer.`;
+- Es mejor un memo corto y denso que uno largo y vacio.`;
 
   const response = await callLLM({
     system: SYSTEM_PROMPT,
