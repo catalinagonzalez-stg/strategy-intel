@@ -18,160 +18,107 @@ export interface NewsletterContent {
   tema_semana: string;
   content_md: string;
   content_slack: string;
-  section_assignments: Array<{
-    signal_id: string;
-    section: string;
-    sort_order: number;
-  }>;
+  section_assignments: Array;
 }
 
 const SECTIONS = FINTOC_CONTEXT.newsletter.sections
   .map(s => `- "${s.id}": ${s.name} — ${s.description}`)
   .join('\n');
 
-const SYSTEM_PROMPT = `Eres el editor del newsletter "Strategy Intel Weekly" de Fintoc.
+const SYSTEM_PROMPT = `Eres el editor de "Strategy Intel Weekly", un briefing semanal de inteligencia de mercado para una fintech de pagos en Chile y Mexico.
 
 ${getFintocContextPrompt()}
 
-Tu trabajo es escribir un MEMO ESTRATEGICO semanal, NO un resumen de noticias.
+═══ TU TRABAJO ═══
 
-PRINCIPIOS EDITORIALES:
-1. FOCO > COBERTURA: Maximo 2-3 temas bien desarrollados. Nunca mas de 3. Es mejor profundidad que amplitud.
-2. DATOS DUROS OBLIGATORIOS: Si un tema NO tiene al menos un dato concreto (monto USD, porcentaje, cantidad de usuarios, fecha de implementacion, volumen de transacciones), NO PUEDE SER TEMA. Descartalo y elige otro. "Visa se expandio" NO sirve. "Visa adquirio Prisma por USD 1.2B, sumando 40M tarjetas en Argentina" SI sirve. Sin numero = sin tema.
-3. INTERPRETACION SIN PRESCRIPCION: Interpreta que significan los hechos, pero NUNCA digas que "debemos", "necesitamos", "tenemos que" hacer algo. No des ordenes. Presenta hechos y deja que el lector piense. BIEN: "Esto pone presion sobre el A2A en Chile." MAL: "Necesitamos robustecer nuestros sistemas."
-4. SIN PREGUNTAS POR TEMA: NO pongas preguntas al final de cada noticia. La unica pregunta del newsletter va en "Lo que queda dando vueltas" al final.
-5. RELEVANCIA REAL: Solo temas que impacten DIRECTAMENTE a los mercados activos (Chile y Mexico). Brasil, Peru, Colombia son contexto secundario — solo si la noticia tiene impacto directo en CL o MX. "BTG se expande a Peru" NO es tema a menos que afecte directamente a un producto nuestro en CL/MX.
-6. MAPEO COMPETITIVO CORRECTO: NO inventes conexiones competitivas. Entiende que hace cada competidor antes de conectarlo con un producto nuestro. Si no hay conexion clara, no la fuerces.
+Reportar HECHOS relevantes del mundo fintech/pagos en Chile y Mexico. Solo hechos con datos. NO interpretes, NO recomiendes, NO conectes noticias con productos nuestros. El equipo sacara sus propias conclusiones.
 
-COMO SELECCIONAR TEMAS (sigue este orden de prioridad):
-1. REGULACION que afecte directamente a nuestros productos en CL/MX (ej: cambios en open banking, nuevas reglas CMF/CNBV)
-2. COMPETIDORES DIRECTOS haciendo movimientos (Belvo, Prometeo, Khipu, Etpay, Toku, Kushki — ver lista completa arriba). Si un competidor directo levanta plata, lanza producto, o consigue certificacion, eso es tema.
-3. DEALS CON DATOS: levantamientos de capital, adquisiciones, alianzas con montos especificos en CL/MX
-4. INFRAESTRUCTURA DE PAGOS: cambios en rails, pagos instantaneos, regulacion de pagos — pero solo con datos concretos
+═══ REGLAS ═══
 
-DESCARTAR siempre:
-- Posts de LinkedIn sin datos verificables
-- Noticias de Brasil/Peru/Argentina que no afecten CL/MX directamente
-- Tendencias genericas ("la IA esta cambiando los pagos", "las fintechs desafian a la banca")
-- Anything sobre POS fisico, terminales, NFC presencial (no es nuestro negocio)
-- Eventos/conferencias sin anuncios concretos
-- Signals marcadas como low_evidence: true (solo usar como contexto secundario, nunca como tema principal)
+PROHIBIDO:
+- Interpretar que significa la noticia para nosotros ("esto pone presion sobre...", "esto abre oportunidad para...")
+- Recomendar acciones ("debemos", "necesitamos", "hay que", "sera clave")
+- Conectar noticias con productos nuestros ("impacta nuestro Smart Checkout", "ventaja para Conexiones")
+- Buzzwords ("enorme oportunidad", "soluciones innovadoras", "fortalecer posicion")
+- Seccion "Para nosotros" — NO EXISTE. Solo reporta el hecho.
 
-DISTINGUIR PRODUCTOS CORRECTAMENTE:
-- Smart Checkout = checkout ONLINE que orquesta metodos de pago en e-commerce. NO tiene que ver con POS fisico ni terminales.
-- Cards/Apple Pay = procesamiento de tarjetas ONLINE. NO es Tap to Pay ni NFC en tiendas fisicas.
-- Transferencias IdP = pagos A2A iniciados por el pagador. Compite con Khipu, Etpay, Toku.
-- Conexiones/Movimientos = open banking, lectura de datos bancarios. Compite con Belvo, Prometeo, Pluggy.
-- Suscripciones PAC = cobros recurrentes. Compite con Khipu PAC, Reveniu.
-- CPF = cuentas empresariales para plataformas. Compite con bancos tradicionales.
+SELECCION DE TEMAS (2-3 temas, todos diferentes):
+1. Regulacion CL/MX (open banking, CMF, CNBV)
+2. Competidores directos (Prometeo, Belvo, Khipu, Etpay, Kushki) con movimientos concretos
+3. Deals con datos (USD, %, usuarios) en CL/MX o LATAM
+4. Infraestructura de pagos con cifras
 
-LENGUAJE PROHIBIDO (si usas estas frases, el newsletter falla validacion):
-- "necesitamos", "debemos", "tenemos que", "hay que" (prescriptivo)
-- "exige que reaccionemos", "nos obliga a" (alarmista)
-- "robustecer", "fortalecer nuestra posicion" (vacio)
-- "explorar alianzas estrategicas" (consultoria generica)
-- "innovaciones en seguridad", "soluciones innovadoras" (buzzword)
-- "enorme oportunidad", "una oportunidad para consolidar" (consultoria)
-- "adaptar rapidamente", "competir eficazmente" (vacio)
-- Cualquier oracion que suene a recomendacion de consultora
+DESCARTAR: LinkedIn sin datos, Brasil/Peru sin impacto directo en CL/MX, tendencias genericas, low_evidence=true, POS/NFC/terminales fisicos.
 
-AUDIENCIA: Todo el equipo de Fintoc (~50 personas). Deben poder leerlo en 3 minutos y salir con una idea clara de "que esta pasando y por que nos importa".
+REGLA DE DATOS: sin al menos 1 cifra concreta, NO es tema.
+REGLA DE DIVERSIDAD: cada tema es una historia distinta. No 3 temas del mismo pais o misma tematica. Mezcla: regulacion + competencia + deal.
+REGLA TL;DR: solo hechos y datos, no interpretacion. "Nu Mexico llega a 15M usuarios" SI. "Nu Mexico impacta el open banking" NO.
+REGLA FUENTES: cada tema incluye link a la fuente.
 
-Secciones disponibles para section_assignments:
-${SECTIONS}
+═══ FORMATO ═══
 
-Responde UNICAMENTE con JSON valido (sin markdown, sin backticks):
+JSON valido (sin markdown, sin backticks):
 {
-  "tema_semana": "<titulo que capture la tesis central, no un resumen>",
-  "content_md": "<memo estrategico en Markdown>",
-  "content_slack": "<version Slack en mrkdwn, max 3800 chars>",
-  "section_assignments": [
-    { "signal_id": "<id>", "section": "<section_id>", "sort_order": <numero> }
-  ]
+  "tema_semana": "",
+  "content_md": "",
+  "content_slack": "",
+  "section_assignments": [{ "signal_id": "", "section": " s.id).join('|')}>", "sort_order":  }]
 }
 
-FORMATO del content_md:
+content_md:
 
-# Strategy Intel Weekly — [Tema: una tesis, no un resumen]
+# Strategy Intel Weekly — [Titular]
 _Semana del [fecha]_
 
-[SI HAY ALERTA URGENTE: 2-3 lineas marcadas con 🚨 sobre regulacion o movimiento critico de competidor]
-
-## [Titulo del Tema 1 — con angulo, no descriptivo]
-**Que paso:** [Parrafo con datos duros: montos, porcentajes, fechas, nombres. SIN DATOS = NO ES TEMA.]
-**Por que importa:** [Interpretacion. "Esto significa que..." "Esto pone presion sobre..." "El riesgo es que..." NUNCA "debemos" ni "necesitamos".]
+## [Tema 1: titulo factual con dato]
+[Parrafo de 3-5 lineas reportando QUE PASO. Incluir: quien, que, cuando, cuanto, donde. Solo hechos verificables con cifras.]
 _Fuente: [link]_
 
-## [Titulo del Tema 2]
-[Mismo formato: que paso con datos + por que importa sin prescripcion]
+## [Tema 2: titulo factual con dato]
+[Mismo formato]
 
-## [Titulo del Tema 3 — solo si realmente aporta y tiene datos]
+## [Tema 3 si tiene datos]
 [Mismo formato]
 
 ---
-## Lo que queda dando vueltas
-[2-3 oraciones que conecten las noticias con un PRODUCTO ESPECIFICO de Fintoc (Smart Checkout, Transferencias IdP, Suscripciones PAC, Conexiones, Cards, CPF). No hables de Fintoc en abstracto. Menciona el producto, su ventaja concreta, y como la noticia lo afecta. Termina con una pregunta provocadora para el equipo. Min 40 palabras.]
+:thread: _Discutamos: que significa esto para nosotros?_
+_Strategy Intel — Fintoc | [N] fuentes_
 
----
-_Strategy Intel — Fintoc | [N] fuentes analizadas esta semana_
+content_slack (max 3800 chars, mrkdwn de Slack):
 
-FORMATO del content_slack (max 3800 chars):
-El content_slack es el PRODUCTO PRINCIPAL. Debe dar ganas de leerlo en Slack. Usa mrkdwn nativo de Slack.
-
-REGLAS DE TONO PARA SLACK:
-- Escribe como un colega senior que te cuenta las noticias en el pasillo, no como un analista que presenta un informe.
-- Primera linea = gancho que genera urgencia o curiosidad. NO "Innovacion en Pagos A2A". SI "Santander y Visa acaban de lanzar pagos con IA en Chile. Esto nos afecta directamente."
-- Oraciones cortas. Parrafos de 1-2 lineas maximo. La gente escanea en Slack.
-- Usa "nosotros/nos" cuando hables de Fintoc. "Esto nos pone en jaque" > "Esto pone a Fintoc en una posicion complicada".
-
-TEMPLATE EXACTO del content_slack (usa mrkdwn de Slack, NO markdown):
-
-:rotating_light: *Strategy Intel Weekly*
+:newspaper: *Strategy Intel Weekly*
 _Semana del [fecha]_
 ━━━━━━━━━━━━━━━━━━━━
 
-*TL;DR — Lo que necesitas saber:*
-• [Bullet 1: hecho + implicancia en 1 linea. Ej: "Santander lanza pagos IA en Chile — competencia directa para nuestro A2A"]
-• [Bullet 2: mismo formato]
-• [Bullet 3: mismo formato]
+*TL;DR:*
+• [hecho + dato en 1 linea]
+• [hecho + dato en 1 linea]
+• [hecho + dato en 1 linea]
 
 ━━━━━━━━━━━━━━━━━━━━
 
-[EMOJI] *[Titulo corto y con angulo]*
-[1-2 oraciones de que paso, con datos duros concretos]
-:arrow_right: *Para nosotros:* [Interpretacion directa, 1-2 oraciones. SIN "debemos/necesitamos/tenemos que".]
+[EMOJI] *[Titulo con dato]*
+[2-3 oraciones: que paso, quien, cuanto, cuando. Solo hechos.]
+:link: 
 
-[EMOJI] *[Titulo tema 2]*
-[Mismo patron: datos + interpretacion sin prescripcion]
+[EMOJI] *[Titulo 2 con dato]*
+[Mismo formato]
 
-[EMOJI tema 3 si aplica]
-[Mismo patron]
-
-━━━━━━━━━━━━━━━━━━━━
-:brain: *Lo que queda dando vueltas*
-[2-3 oraciones que conecten las noticias de la semana con un producto ESPECIFICO de Fintoc. No hables de Fintoc en abstracto — menciona el producto concreto (Smart Checkout, Transferencias IdP, Suscripciones PAC, Conexiones, Cards, CPF) y explica como la noticia lo afecta. Ej: "Si los pagos A2A crecen 40% en Chile, nuestras Transferencias IdP — que ya tienen 99% de cobertura bancaria — estan en la posicion perfecta para capturar ese volumen. La pregunta es si aceleramos la expansion a MX antes de que Khipu se instale alla." Min 40 palabras.]
+[EMOJI si hay tema 3] *[Titulo 3]*
+[Mismo formato]
 
 ━━━━━━━━━━━━━━━━━━━━
-:speech_balloon: _Discutamos en el thread_ :point_down:
-_Strategy Intel — Fintoc | [N] fuentes analizadas_
+:speech_balloon: _Que significa esto para nosotros? Discutamos en el thread_ :point_down:
+_Strategy Intel — Fintoc_
 
-EMOJIS POR TIPO DE TEMA (elige segun contenido):
-- :rotating_light: Alerta urgente / regulacion critica
-- :crossed_swords: Competencia / movimiento de competidor
-- :shield: Regulacion / compliance
-- :chart_with_upwards_trend: Tendencia / oportunidad de mercado
-- :rocket: Producto / tecnologia nueva
-- :moneybag: Funding / M&A
-- :globe_with_meridians: Expansion / mercado nuevo
-
-IMPORTANTE: El content_slack NO es una conversion del content_md. Es una pieza independiente, optimizada para engagement en Slack. Debe ser escaneable en 30 segundos y leible en profundidad en 2 minutos.`;
+Tono: periodista de fintech — directo, conciso, factual. Oraciones cortas.`;
 
 export interface NewsletterContext {
   recentTopics?: string[];  // temas de ediciones recientes para evitar repeticion
   hotTopics?: string[];     // temas trending de Slack u otras fuentes
 }
 
-export async function generateNewsletter(signals: SignalForNewsletter[], context?: NewsletterContext): Promise<NewsletterContent> {
+export async function generateNewsletter(signals: SignalForNewsletter[], context?: NewsletterContext): Promise {
   if (signals.length === 0) {
     return {
       tema_semana: 'Sin signals esta semana',
@@ -205,58 +152,150 @@ Signal ${i + 1} (id: ${s.id}):
     contextBlock += `\nTEMAS HOT EN FINTOC (priorizar si hay signals relacionadas):\n${context.hotTopics.map((t, i) => `- ${t}`).join('\n')}\n`;
   }
 
-  const userMessage = `Genera el memo estrategico de la semana del ${dateStr}.
-
-Hay ${signals.length} signals curadas. Tu trabajo NO es mencionar todas. Selecciona las 2-3 mas importantes y desarrollalas con profundidad.
+  const userMessage = `Semana del ${dateStr}. ${signals.length} signals disponibles.
 ${contextBlock}
-${signalsSummary}
+PASO 1 — FILTRA: Lee todas las signals. Descarta las que no tienen datos duros (USD, %, cantidad). Descarta low_evidence=true. Descarta POS/NFC/terminales fisicos.
 
-INSTRUCCIONES CRITICAS:
-- MAXIMO 3 temas. Si hay 30 signals, igual son maximo 3 temas. Agrupa signals relacionadas bajo un mismo tema.
-- SELECCION DE TEMAS: Primero filtra signals con datos duros (USD, %, cantidades). Luego prioriza: (1) regulacion CL/MX, (2) movimientos de competidores directos, (3) deals con montos. Si una signal no tiene ningun numero, NO es tema.
-- Priorizar signals con impact_level "high" y publicadas esta semana.
-- IGNORAR signals con low_evidence: true como tema principal. Solo como contexto.
-- IGNORAR signals de LinkedIn sin datos verificables.
-- SOLO Chile y Mexico como temas principales.
-- NO pongas preguntas al final de cada tema. La UNICA pregunta va en "Lo que queda dando vueltas".
-- NUNCA uses lenguaje prescriptivo. Interpreta hechos, no des ordenes.
-- NO inventes conexiones con productos. Tap to Pay, NFC, POS fisico NO son Smart Checkout ni Cards. Open banking SI es Conexiones. A2A SI es Transferencias IdP.
-- Tono: colega senior contandote algo en el pasillo. Oraciones cortas. "Nos/nosotros".
-- NUNCA menciones "Fintoc" por nombre en el cuerpo. Usa "nosotros/nos". Solo en el footer.
-- content_slack max 3800 chars.
-- Es mejor un memo corto y denso que uno largo y vacio.`;
+PASO 2 — SELECCIONA 2-3 TEMAS DIFERENTES: De las que quedan, elige 2-3 priorizando: regulacion CL/MX > competidores directos > deals con montos. Cada tema debe ser una historia distinta (no 3 del mismo pais o misma tematica).
 
-  const response = await callLLM({
-    system: SYSTEM_PROMPT,
-    userMessage,
-    maxTokens: 8192,
-  });
+PASO 3 — ESCRIBE: Para cada tema, reporta SOLO QUE PASO. Quien, que, cuando, cuanto, donde. Solo hechos verificables con cifras. Incluye link a la fuente. NO interpretes, NO recomiendes, NO conectes con nuestros productos.
 
-  try {
-    const cleaned = response.replace(/\`\`\`json\n?/g, '').replace(/\`\`\`\n?/g, '').trim();
-    const parsed = JSON.parse(cleaned);
+RECUERDA: Eres periodista, no consultor. Solo reportas hechos.
 
-    return {
-      tema_semana: String(parsed.tema_semana || 'Newsletter Semanal'),
-      content_md: String(parsed.content_md || ''),
-      content_slack: String(parsed.content_slack || '').substring(0, 3900),
-      section_assignments: Array.isArray(parsed.section_assignments)
-        ? parsed.section_assignments.map((sa: any) => ({
-            signal_id: String(sa.signal_id),
-            section: String(sa.section),
-            sort_order: Number(sa.sort_order) || 0,
-          }))
-        : [],
-    };
-  } catch (e) {
-    console.error('[newsletter] Failed to parse LLM response:', response.substring(0, 300));
-    return {
-      tema_semana: 'Newsletter Semanal',
-      content_md: response.length > 100 ? response : 'Error al generar newsletter.',
-      content_slack: '*Strategy Intel Weekly*\nError al generar el newsletter. Revise los logs.',
-      section_assignments: [],
-    };
+${signalsSummary}`;
+
+  // Retry loop: generate, validate, regenerate with feedback up to MAX_RETRIES
+  const MAX_RETRIES = 3;
+  let lastContent: NewsletterContent | null = null;
+  let lastViolations: string[] = [];
+
+  for (let attempt = 1; attempt  `- ${v}`).join('\n')}\n\nCorrige TODAS las violaciones. Si no las corriges, el newsletter sera rechazado de nuevo.`;
+
+    const response = await callLLM({
+      system: SYSTEM_PROMPT,
+      userMessage: currentMessage,
+      maxTokens: 8192,
+    });
+
+    try {
+      const cleaned = response.replace(/\`\`\`json\n?/g, '').replace(/\`\`\`\n?/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+
+      lastContent = {
+        tema_semana: String(parsed.tema_semana || 'Newsletter Semanal'),
+        content_md: String(parsed.content_md || ''),
+        content_slack: String(parsed.content_slack || '').substring(0, 3900),
+        section_assignments: Array.isArray(parsed.section_assignments)
+          ? parsed.section_assignments.map((sa: any) => ({
+              signal_id: String(sa.signal_id),
+              section: String(sa.section),
+              sort_order: Number(sa.sort_order) || 0,
+            }))
+          : [],
+      };
+
+      // Run content quality checks
+      const violations = checkContentViolations(lastContent);
+      if (violations.length === 0) {
+        console.log(`[newsletter] Passed validation on attempt ${attempt}`);
+        return lastContent;
+      }
+
+      lastViolations = violations;
+      console.warn(`[newsletter] Attempt ${attempt}/${MAX_RETRIES} rejected: ${violations.join('; ')}`);
+
+      if (attempt  setTimeout(resolve, 1000));
+      }
+    } catch (e) {
+      console.error(`[newsletter] Attempt ${attempt} parse error:`, response.substring(0, 300));
+      lastViolations = ['JSON parse error — responde SOLO con JSON valido'];
+      if (attempt === MAX_RETRIES) {
+        return {
+          tema_semana: 'Newsletter Semanal',
+          content_md: response.length > 100 ? response : 'Error al generar newsletter.',
+          content_slack: '*Strategy Intel Weekly*\nError al generar el newsletter. Revise los logs.',
+          section_assignments: [],
+        };
+      }
+    }
   }
+
+  // If we exhausted retries, return last content with warnings
+  console.warn(`[newsletter] Exhausted ${MAX_RETRIES} retries. Returning last attempt with violations: ${lastViolations.join('; ')}`);
+  return lastContent || {
+    tema_semana: 'Newsletter Semanal',
+    content_md: 'Error: no se pudo generar un newsletter que pase validacion.',
+    content_slack: '*Strategy Intel Weekly*\nError al generar. Revise los logs.',
+    section_assignments: [],
+  };
+}
+
+/**
+ * Check content for rule violations that require regeneration.
+ * Returns array of violation descriptions. Empty = passed.
+ */
+function checkContentViolations(content: NewsletterContent): string[] {
+  const violations: string[] = [];
+  const allText = `${content.content_md} ${content.content_slack}`;
+  const allTextLower = allText.toLowerCase();
+
+  // 1. Prescriptive / recommendation language — this is a FACTUAL briefing, no opinions
+  const prescriptive = allText.match(/\b(necesitamos|debemos|tenemos que|hay que|nos obliga a|exige que|es crucial|sera clave|es necesario|es fundamental|necesidad de|es imperativo|es urgente que|mover ficha|apuntalar|deberiamos|recomendamos|conviene que)\b/gi);
+  if (prescriptive) {
+    violations.push(`Lenguaje prescriptivo: "${prescriptive.slice(0, 3).join('", "')}". Este es un briefing FACTUAL — solo reporta hechos, no recomiendes acciones.`);
+  }
+
+  // 2. Interpretation / opinion language — should NOT connect news to "us"
+  const interpretation = allText.match(/\b(esto significa para nosotros|pone presi[oó]n sobre|abre oportunidad|nos posiciona|nuestra estrategia|nuestro producto|impacta nuestro|ventaja para nosotros|nos afecta|nos beneficia|para nosotros)\b/gi);
+  if (interpretation) {
+    violations.push(`Interpretacion detectada: "${interpretation.slice(0, 3).join('", "')}". NO interpretes que significa para nosotros — el equipo lo discutira en el thread.`);
+  }
+
+  // 3. Consultancy buzzwords
+  const buzzwords = allText.match(/\b(enorme oportunidad|oportunidad clave|oportunidad para consolidar|fortalecer.{0,10}posicion|robustecer|explorar alianzas|soluciones innovadoras|adaptar.{0,10}oferta|competir eficazmente|posici[oó]n ventajosa|campo f[eé]rtil)\b/gi);
+  if (buzzwords) {
+    violations.push(`Buzzwords de consultoria: "${buzzwords.slice(0, 3).join('", "')}". Solo hechos y datos.`);
+  }
+
+  // 4. Topic diversity — all topics should NOT be about the same thing
+  const topicTitles = (content.content_md.match(/^## .+/gm) || [])
+    .map(t => t.replace('## ', '').toLowerCase());
+  if (topicTitles.length >= 3) {
+    const getWords = (t: string) => t.replace(/[^a-záéíóúñü\s]/gi, '').split(/\s+/).filter(w => w.length > 3);
+    const allTitleWords = topicTitles.map(getWords);
+    const wordFreq: Record = {};
+    for (const words of allTitleWords) {
+      const unique = [...new Set(words)];
+      for (const w of unique) wordFreq[w] = (wordFreq[w] || 0) + 1;
+    }
+    const repeatedThemes = Object.entries(wordFreq)
+      .filter(([word, count]) => count >= topicTitles.length && !['para', 'como', 'entre', 'hacia', 'nuevo', 'nueva', 'chile', 'mexico', 'weekly', 'strategy', 'intel'].includes(word))
+      .map(([word]) => word);
+    if (repeatedThemes.length > 0) {
+      violations.push(`Temas repetitivos: todos hablan de "${repeatedThemes.join(', ')}". Elige temas DIFERENTES — mezcla regulacion, competencia, y deals.`);
+    }
+  }
+
+  // 5. Fintoc product mentions in body — briefing should NOT connect to our products
+  const productMentions = allTextLower.match(/\b(smart checkout|conexiones|transferencias bancarias|suscripciones pac|cobros charges|cuentas empresariales|cards\/apple pay)\b/gi);
+  if (productMentions) {
+    violations.push(`Mencion de productos Fintoc: "${productMentions.slice(0, 2).join('", "')}". Este briefing NO conecta noticias con nuestros productos — solo reporta hechos.`);
+  }
+
+  // 6. Fintoc mentioned in body (not footer)
+  const bodyText = allText.split('Strategy Intel — Fintoc')[0] || allText;
+  const fintocInBody = bodyText.replace(/Strategy Intel Weekly/g, '').replace(/Strategy Intel — Fintoc/g, '');
+  if (/\bFintoc\b/i.test(fintocInBody)) {
+    violations.push('No menciones "Fintoc" en el cuerpo del newsletter. Solo aparece en el footer.');
+  }
+
+  // 7. Source links — each topic should include a link
+  const topicSections = content.content_slack.split(/━+/).filter(s => s.includes('*') && s.length > 100);
+  const sectionsWithoutLinks = topicSections.filter(s => !s.includes(' 0 && topicSections.length > 0) {
+    violations.push(`${sectionsWithoutLinks.length} tema(s) sin link a fuente en version Slack. Cada tema debe incluir :link: .`);
+  }
+
+  return violations;
 }
 
 /**
@@ -264,12 +303,12 @@ INSTRUCCIONES CRITICAS:
  */
 export function validateNewsletter(content: NewsletterContent, signalCount: number): {
   valid: boolean;
-  checks: Array<{ id: string; pass: boolean; level: 'fail' | 'warn'; detail: string }>;
+  checks: Array;
   errors: string[];
   warnings: string[];
 } {
   const rules = FINTOC_CONTEXT.newsletter.validation_rules;
-  const checks: Array<{ id: string; pass: boolean; level: 'fail' | 'warn'; detail: string }> = [];
+  const checks: Array = [];
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -286,17 +325,18 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   });
   if (!hasTopics) errors.push(`Minimo ${minTopics} temas desarrollados requeridos`);
 
-  // Check for prescriptive language (should NOT be present)
-  const prescriptivePatterns = /\b(necesitamos|debemos|tenemos que|hay que|nos obliga a|exige que)\b/gi;
-  const prescriptiveMatches = content.content_slack?.match(prescriptivePatterns) || [];
-  const noPrescriptive = prescriptiveMatches.length === 0;
+  // Check for content violations (prescriptive, buzzwords, interpretation)
+  const contentViolations = checkContentViolations(content);
+  const noViolations = contentViolations.length === 0;
   checks.push({
-    id: 'no_prescriptive',
-    pass: noPrescriptive,
+    id: 'content_quality',
+    pass: noViolations,
     level: 'warn',
-    detail: noPrescriptive ? 'Sin lenguaje prescriptivo' : `Lenguaje prescriptivo detectado: ${prescriptiveMatches.join(', ')}`,
+    detail: noViolations ? 'Sin violaciones de contenido' : contentViolations.join('; '),
   });
-  if (!noPrescriptive) warnings.push(`Lenguaje prescriptivo encontrado: ${prescriptiveMatches.join(', ')}`);
+  if (!noViolations) {
+    for (const v of contentViolations) warnings.push(v);
+  }
 
   // Check content exists
   const hasContent = content.content_md.length > 200;
