@@ -18,7 +18,11 @@ export interface NewsletterContent {
   tema_semana: string;
   content_md: string;
   content_slack: string;
-  section_assignments: Array;
+  section_assignments: Array<{
+    signal_id: string;
+    section: string;
+    sort_order: number;
+  }>;
 }
 
 const SECTIONS = FINTOC_CONTEXT.newsletter.sections
@@ -59,10 +63,10 @@ REGLA FUENTES: cada tema incluye link a la fuente.
 
 JSON valido (sin markdown, sin backticks):
 {
-  "tema_semana": "",
-  "content_md": "",
-  "content_slack": "",
-  "section_assignments": [{ "signal_id": "", "section": " s.id).join('|')}>", "sort_order":  }]
+  "tema_semana": "<titular periodistico corto>",
+  "content_md": "<briefing en Markdown>",
+  "content_slack": "<version Slack mrkdwn, max 3800 chars>",
+  "section_assignments": [{ "signal_id": "<id>", "section": "<${FINTOC_CONTEXT.newsletter.sections.map(s => s.id).join('|')}>", "sort_order": <n> }]
 }
 
 content_md:
@@ -99,7 +103,7 @@ _Semana del [fecha]_
 
 [EMOJI] *[Titulo con dato]*
 [2-3 oraciones: que paso, quien, cuanto, cuando. Solo hechos.]
-:link: 
+:link: <[URL]|[fuente]>
 
 [EMOJI] *[Titulo 2 con dato]*
 [Mismo formato]
@@ -118,7 +122,7 @@ export interface NewsletterContext {
   hotTopics?: string[];     // temas trending de Slack u otras fuentes
 }
 
-export async function generateNewsletter(signals: SignalForNewsletter[], context?: NewsletterContext): Promise {
+export async function generateNewsletter(signals: SignalForNewsletter[], context?: NewsletterContext): Promise<NewsletterContent> {
   if (signals.length === 0) {
     return {
       tema_semana: 'Sin signals esta semana',
@@ -169,7 +173,10 @@ ${signalsSummary}`;
   let lastContent: NewsletterContent | null = null;
   let lastViolations: string[] = [];
 
-  for (let attempt = 1; attempt  `- ${v}`).join('\n')}\n\nCorrige TODAS las violaciones. Si no las corriges, el newsletter sera rechazado de nuevo.`;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const currentMessage = attempt === 1
+      ? userMessage
+      : `${userMessage}\n\n═══ INTENTO ${attempt}: TU RESPUESTA ANTERIOR FUE RECHAZADA ═══\nViolaciones detectadas:\n${lastViolations.map(v => `- ${v}`).join('\n')}\n\nCorrige TODAS las violaciones. Si no las corriges, el newsletter sera rechazado de nuevo.`;
 
     const response = await callLLM({
       system: SYSTEM_PROMPT,
@@ -204,7 +211,8 @@ ${signalsSummary}`;
       lastViolations = violations;
       console.warn(`[newsletter] Attempt ${attempt}/${MAX_RETRIES} rejected: ${violations.join('; ')}`);
 
-      if (attempt  setTimeout(resolve, 1000));
+      if (attempt < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } catch (e) {
       console.error(`[newsletter] Attempt ${attempt} parse error:`, response.substring(0, 300));
@@ -263,7 +271,7 @@ function checkContentViolations(content: NewsletterContent): string[] {
   if (topicTitles.length >= 3) {
     const getWords = (t: string) => t.replace(/[^a-záéíóúñü\s]/gi, '').split(/\s+/).filter(w => w.length > 3);
     const allTitleWords = topicTitles.map(getWords);
-    const wordFreq: Record = {};
+    const wordFreq: Record<string, number> = {};
     for (const words of allTitleWords) {
       const unique = [...new Set(words)];
       for (const w of unique) wordFreq[w] = (wordFreq[w] || 0) + 1;
@@ -291,8 +299,9 @@ function checkContentViolations(content: NewsletterContent): string[] {
 
   // 7. Source links — each topic should include a link
   const topicSections = content.content_slack.split(/━+/).filter(s => s.includes('*') && s.length > 100);
-  const sectionsWithoutLinks = topicSections.filter(s => !s.includes(' 0 && topicSections.length > 0) {
-    violations.push(`${sectionsWithoutLinks.length} tema(s) sin link a fuente en version Slack. Cada tema debe incluir :link: .`);
+  const sectionsWithoutLinks = topicSections.filter(s => !s.includes('<http') && !s.includes(':link:'));
+  if (sectionsWithoutLinks.length > 0 && topicSections.length > 0) {
+    violations.push(`${sectionsWithoutLinks.length} tema(s) sin link a fuente en version Slack. Cada tema debe incluir :link: <URL|fuente>.`);
   }
 
   return violations;
@@ -303,12 +312,12 @@ function checkContentViolations(content: NewsletterContent): string[] {
  */
 export function validateNewsletter(content: NewsletterContent, signalCount: number): {
   valid: boolean;
-  checks: Array;
+  checks: Array<{ id: string; pass: boolean; level: 'fail' | 'warn'; detail: string }>;
   errors: string[];
   warnings: string[];
 } {
   const rules = FINTOC_CONTEXT.newsletter.validation_rules;
-  const checks: Array = [];
+  const checks: Array<{ id: string; pass: boolean; level: 'fail' | 'warn'; detail: string }> = [];
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -325,7 +334,7 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   });
   if (!hasTopics) errors.push(`Minimo ${minTopics} temas desarrollados requeridos`);
 
-  // Check for content violations (prescriptive, buzzwords, interpretation)
+  // Check for content violations (prescriptive, buzzwords, wrong mapping)
   const contentViolations = checkContentViolations(content);
   const noViolations = contentViolations.length === 0;
   checks.push({
