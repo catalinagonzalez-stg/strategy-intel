@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { fetchFeed, type ParsedEntry } from './rss';
 import { fetchSerperNews } from './serper';
+import { fetchSlackLinks } from './slack';
 import { classifyArticle } from '@/lib/ai/classify';
 import { DEFAULT_MODEL } from '@/lib/ai/client';
 
@@ -43,7 +44,7 @@ async function ingestSource(source: Source): Promise<IngestResult> {
     return result;
   }
 
-  if (source.type !== 'rss' && source.type !== 'serper') {
+  if (source.type !== 'rss' && source.type !== 'serper' && source.type !== 'slack') {
     result.errors.push(`Source type "${source.type}" not yet supported natively`);
     return result;
   }
@@ -52,6 +53,11 @@ async function ingestSource(source: Source): Promise<IngestResult> {
   let entries: ParsedEntry[];
   if (source.type === 'serper') {
     entries = await fetchSerperNews(source.name, source.url);
+  } else if (source.type === 'slack') {
+    // Channel ID from the source url if it looks like one, else the env default
+    const channelId = source.url?.match(/[CG][A-Z0-9]{8,}/)?.[0] || process.env.SLACK_CHANNEL_ID;
+    if (!channelId) throw new Error('No Slack channel ID configured (source url or SLACK_CHANNEL_ID)');
+    entries = await fetchSlackLinks(channelId);
   } else {
     entries = await fetchFeed(source.url!, source.name);
   }
@@ -107,7 +113,8 @@ async function ingestSource(source: Source): Promise<IngestResult> {
           content_text: entry.content_text,
           content_hash: entry.content_hash,
           published_at: entry.published_at || new Date().toISOString(),
-          status: 'new',
+          // Slack links were already curated by a human — straight to promoted
+          status: source.type === 'slack' ? 'promoted' : 'new',
           pinned: false,
         })
         .select('id')
