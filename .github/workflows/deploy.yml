@@ -1,0 +1,20 @@
+# Deploys to Render on every push to main via the private Deploy Hook.
+# Exists because the Render<->GitHub app integration stopped delivering
+# push events (no repo webhooks configured), so Render's own Auto-Deploy
+# never fires. Push-triggered workflows always run — unlike scheduled
+# crons, GitHub never skips them on low-activity repos.
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          curl -sf -o /dev/null -w "Render deploy hook responded %{http_code}\n" "$RENDER_DEPLOY_HOOK"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
