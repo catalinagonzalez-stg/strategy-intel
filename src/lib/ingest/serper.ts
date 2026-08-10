@@ -23,9 +23,6 @@ function parseSerperDate(dateStr: string | undefined): string {
   return new Date().toISOString();
 }
 
-interface SerperNewsResult { title: string; link: string; snippet: string; date?: string; source?: string; imageUrl?: string; }
-interface SerperResponse { news?: SerperNewsResult[]; searchParameters?: { q: string; type: string; }; }
-
 function buildSearchQuery(sourceName: string, sourceUrl: string | null): string {
   const keywordSources: Record<string, string> = {
     'Serper - payments_global': 'fintech payments infrastructure news',
@@ -55,15 +52,19 @@ function buildSearchQuery(sourceName: string, sourceUrl: string | null): string 
     'Clip (MX)': 'Clip Mexico pagos fintech',
     'EBANX (BR)': 'EBANX Brasil pagos fintech',
     'Prometeo': 'Prometeo open banking API latinoamerica',
-    'CMF Chile': 'CMF Chile regulacion financiera fintech',
-    'CNBV México': 'CNBV Mexico regulacion fintech',
-    'Banxico': 'Banxico Mexico pagos regulacion',
-    'Banco Central Chile': 'Banco Central Chile pagos regulacion',
-    'FNE Chile': 'FNE Chile competencia fintech',
+    // Regulators: OR-queries — Google News ANDs plain terms, and a strict AND
+    // over a 7-day window returns almost nothing
+    'CMF Chile': 'CMF (fintech OR "finanzas abiertas" OR normativa OR "medios de pago" OR "ley fintech")',
+    'CNBV México': 'CNBV (fintech OR regulación OR sanción OR "tecnología financiera")',
+    'Banxico': 'Banxico (pagos OR SPEI OR CoDi OR DiMo OR fintech OR regulación)',
+    'Banco Central Chile': '"Banco Central" Chile (pagos OR TEF OR transferencias OR fraudes OR fintech)',
+    'FNE Chile': 'FNE (competencia OR pagos OR fintech OR tarjetas)',
     'El Economista MX': 'El Economista Mexico fintech pagos',
     'La Tercera CL': 'La Tercera Chile fintech startups tecnologia',
     // Converted from broken RSS feeds — now using Google News via Serper
     'Diario Financiero': 'site:df.cl OR "Diario Financiero" fintech pagos Chile economia',
+    // Cloudflare blocks server-side fetches of their RSS — searched via Google News instead
+    'Ex-Ante (CL)': 'site:ex-ante.cl (fintech OR pagos OR banco OR CMF OR economía)',
     'Bloomberg Linea': 'site:bloomberglinea.com fintech pagos latinoamerica',
     'Contxto': 'site:contxto.com OR Contxto startups fintech latinoamerica',
     'The Paypers': 'site:thepaypers.com OR "The Paypers" payments fintech',
@@ -99,39 +100,87 @@ function getSerperLocale(sourceName: string): { gl?: string; hl?: string } {
   return {};
 }
 
+// Map the source locale to a Google News edition (hl/gl/ceid triplet).
+function getGoogleNewsEdition(sourceName: string): { hl: string; gl: string; ceid: string } {
+  const { gl, hl } = getSerperLocale(sourceName);
+  if (hl === 'es') {
+    const country = (gl || 'US').toUpperCase();
+    return { hl: 'es-419', gl: country, ceid: `${country}:es-419` };
+  }
+  if (hl === 'pt') return { hl: 'pt-BR', gl: 'BR', ceid: 'BR:pt-419' };
+  return { hl: 'en-US', gl: 'US', ceid: 'US:en' };
+}
+
+function extractItemTag(itemXml: string, tag: string): string | null {
+  const cdata = itemXml.match(new RegExp(`<${tag}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>\\s*</${tag}>`, 'i'));
+  if (cdata) return cdata[1].trim();
+  const plain = itemXml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i'));
+  return plain ? plain[1].trim() : null;
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'")
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(Number(num)));
+}
+
+/**
+ * Search Google News for a source's query, via the free RSS endpoint
+ * (news.google.com/rss/search). Replaces the paid Serper API — the prepaid
+ * account ran out of credits (ago-2026) and won't be recharged. Source type
+ * stays 'serper' in the DB; only the transport changed.
+ */
 export async function fetchSerperNews(sourceName: string, sourceUrl: string | null): Promise<ParsedEntry[]> {
-  const apiKey = process.env.SERPER_API_KEY;
-  if (!apiKey) throw new Error('SERPER_API_KEY not configured');
   const query = buildSearchQuery(sourceName, sourceUrl);
-  console.log('[serper] Searching for "' + query + '" (source: ' + sourceName + ')');
+  const { hl, gl, ceid } = getGoogleNewsEdition(sourceName);
+  // when:7d replicates the old tbs=qdr:w one-week window
+  const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(query + ' when:7d')
+    + '&hl=' + hl + '&gl=' + gl + '&ceid=' + encodeURIComponent(ceid);
+  console.log('[serper] Google News RSS search "' + query + '" [' + ceid + '] (source: ' + sourceName + ')');
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch('https://google.serper.dev/news', {
-      method: 'POST',
-      headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: query, num: 10, tbs: 'qdr:w', ...getSerperLocale(sourceName) }),
+    const response = await fetch(url, {
       signal: controller.signal,
+      headers: { 'Accept': 'application/rss+xml, application/xml, text/xml' },
     });
     if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      throw new Error('Serper API returned ' + response.status + (body ? ': ' + body.substring(0, 200) : ''));
+      throw new Error('Google News RSS returned ' + response.status + ' for "' + sourceName + '"');
     }
-    const data: SerperResponse = await response.json();
-    const results = data.news || [];
-    console.log('[serper] Got ' + results.length + ' results for "' + sourceName + '"');
-    return results.map((item): ParsedEntry => {
-      const hash = createHash('sha256').update(item.title + item.link).digest('hex');
+    const xml = await response.text();
+    const items = xml.split('<item>').slice(1);
+    const entries: ParsedEntry[] = [];
+    for (const item of items.slice(0, 10)) {
+      const rawTitle = extractItemTag(item, 'title');
+      const link = extractItemTag(item, 'link');
+      if (!rawTitle || !link) continue;
+      // Google News titles come as "Headline - Medio"; <source> carries the outlet
+      const sourceTag = extractItemTag(item, 'source');
+      const sourceUrlAttr = item.match(/<source[^>]*url="([^"]*)"/i)?.[1];
+      let title = decodeEntities(rawTitle);
+      if (sourceTag && title.endsWith(' - ' + decodeEntities(sourceTag))) {
+        title = title.slice(0, -(' - ' + decodeEntities(sourceTag)).length);
+      }
       let sourceDomain = sourceName;
-      try { sourceDomain = new URL(item.link).hostname; } catch { sourceDomain = item.source || sourceName; }
-      return {
-        title: item.title, url: item.link, author: item.source || null,
-        content_snippet: item.snippet || null, content_text: item.snippet || null,
-        published_at: parseSerperDate(item.date), source_domain: sourceDomain, content_hash: hash,
-      };
-    });
+      try { sourceDomain = new URL(sourceUrlAttr || link).hostname; } catch { /* keep sourceName */ }
+      const pubDate = extractItemTag(item, 'pubDate');
+      const hash = createHash('sha256').update(title + link).digest('hex');
+      entries.push({
+        title,
+        url: link,
+        author: sourceTag ? decodeEntities(sourceTag) : null,
+        content_snippet: title,
+        content_text: title,
+        published_at: parseSerperDate(pubDate || undefined),
+        source_domain: sourceDomain,
+        content_hash: hash,
+      });
+    }
+    console.log('[serper] Got ' + entries.length + ' results for "' + sourceName + '"');
+    return entries;
   } catch (error) {
-    if ((error as Error).name === 'AbortError') throw new Error('Serper request timed out for "' + sourceName + '"');
+    if ((error as Error).name === 'AbortError') throw new Error('Google News request timed out for "' + sourceName + '"');
     throw error;
   } finally { clearTimeout(timeout); }
 }

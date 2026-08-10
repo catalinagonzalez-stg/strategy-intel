@@ -94,7 +94,8 @@ Contenido: ${content.substring(0, 3000)}`;
     const parsed = JSON.parse(cleaned);
 
     return {
-      relevance_score: Math.min(10, Math.max(0, Number(parsed.relevance_score) || 0)),
+      // DB check constraint requires 1-10; irrelevant articles land at 1
+      relevance_score: Math.min(10, Math.max(1, Number(parsed.relevance_score) || 1)),
       topics: (parsed.topics || []).filter((t: string) => TOPICS_LIST.includes(t)) as TopicEnum[],
       region: REGIONS_LIST.includes(parsed.region) ? parsed.region as Region : 'global',
       bucket: BUCKETS_LIST.includes(parsed.bucket) ? parsed.bucket as Bucket : 'payments_global',
@@ -107,9 +108,9 @@ Contenido: ${content.substring(0, 3000)}`;
     };
   } catch (e) {
     console.error('[classify] Failed to parse LLM response:', response.substring(0, 200));
-    // Return a low-relevance default
+    // Return a low-relevance default (1 is the DB minimum)
     return {
-      relevance_score: 0,
+      relevance_score: 1,
       topics: [],
       region: 'global',
       bucket: 'payments_global',
