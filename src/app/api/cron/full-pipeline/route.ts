@@ -42,7 +42,13 @@ export async function POST(request: Request) {
         headers,
       });
       results.ingest = await ingestRes.json();
-      console.log(`[full-pipeline] Ingest: ${JSON.stringify(results.ingest).substring(0, 200)}`);
+      const failedSources = (results.ingest?.results || []).filter(
+        (r: { errors?: string[] }) => (r.errors?.length || 0) > 0
+      );
+      console.log(`[full-pipeline] Ingest: fetched=${results.ingest?.total_fetched ?? '?'}, new=${results.ingest?.total_new ?? '?'}, classified=${results.ingest?.total_classified ?? '?'}, sources_with_errors=${failedSources.length}`);
+      for (const f of failedSources) {
+        console.warn(`[full-pipeline] Source "${f.source_name}" had errors: ${(f.errors || []).join('; ')}`);
+      }
     } catch (err) {
       results.ingest = { error: String(err) };
       console.error('[full-pipeline] Ingest failed:', err);

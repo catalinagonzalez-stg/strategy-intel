@@ -28,7 +28,11 @@ export async function POST(request: Request) {
 
     const result = await ingestAllSources();
 
-    console.log(`[cron/ingest] Complete: ${result.total_fetched} fetched, ${result.total_new} new, ${result.total_classified} classified`);
+    const failedSources = result.results.filter(r => r.errors.length > 0);
+    console.log(`[cron/ingest] Complete: ${result.total_fetched} fetched, ${result.total_new} new, ${result.total_classified} classified, ${failedSources.length} sources with errors`);
+    for (const f of failedSources) {
+      console.warn(`[cron/ingest] Source "${f.source_name}" had errors: ${f.errors.join('; ')}`);
+    }
 
     return NextResponse.json({
       success: true,

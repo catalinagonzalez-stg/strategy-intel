@@ -17,3 +17,9 @@ services:
         sync: false
       - key: SLACK_CHANNEL_ID
         sync: false
+      - key: SERPER_API_KEY
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false

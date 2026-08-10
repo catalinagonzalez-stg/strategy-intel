@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { fetchFeed, type ParsedEntry } from './rss';
 import { fetchSerperNews } from './serper';
 import { classifyArticle } from '@/lib/ai/classify';
+import { DEFAULT_MODEL } from '@/lib/ai/client';
 
 interface Source {
   id: string;
@@ -55,6 +56,19 @@ async function ingestSource(source: Source): Promise<IngestResult> {
     entries = await fetchFeed(source.url!, source.name);
   }
   result.fetched = entries.length;
+
+  // Drop event pages and future-dated items: a webinar dated next month would
+  // otherwise score as maximally fresh and compete for the newsletter.
+  const maxPublishedAt = Date.now() + 24 * 60 * 60 * 1000;
+  const validEntries = entries.filter(e => {
+    if (e.url && e.url.includes('/event-info/')) return false;
+    if (e.published_at && new Date(e.published_at).getTime() > maxPublishedAt) return false;
+    return true;
+  });
+  if (validEntries.length < entries.length) {
+    console.log(`[ingest] ${source.name}: dropped ${entries.length - validEntries.length} event/future-dated entries`);
+  }
+  entries = validEntries;
 
   if (entries.length === 0) return result;
 
@@ -132,7 +146,7 @@ async function ingestSource(source: Source): Promise<IngestResult> {
             confidence: classification.confidence,
             freshness_days: classification.freshness_days,
             is_weekly_eligible: classification.is_weekly_eligible,
-            classification_model: 'claude-sonnet-4-20250514',
+            classification_model: DEFAULT_MODEL,
           });
 
         if (classErr) {
@@ -187,6 +201,7 @@ export async function ingestAllSources(): Promise<{
       results.push(result);
       console.log(`[ingest] ${source.name}: fetched=${result.fetched}, new=${result.new_articles}, classified=${result.classified}`);
     } catch (err) {
+      console.error(`[ingest] ${source.name} FAILED: ${String(err)}`);
       results.push({
         source_id: source.id,
         source_name: source.name,

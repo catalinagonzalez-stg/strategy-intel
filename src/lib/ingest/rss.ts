@@ -144,19 +144,16 @@ export async function fetchFeed(url: string, sourceDomain: string): Promise<Pars
         });
 
       if (!response.ok) {
-              console.warn(`[rss] Feed ${sourceDomain} returned ${response.status}`);
-              return [];
+              throw new Error(`Feed ${sourceDomain} returned HTTP ${response.status}`);
       }
 
       const xml = await response.text();
         return parseFeedXml(xml, sourceDomain);
   } catch (error) {
         if ((error as Error).name === 'AbortError') {
-                console.warn(`[rss] Feed ${sourceDomain} timed out`);
-        } else {
-                console.error(`[rss] Error fetching ${sourceDomain}:`, error);
+                throw new Error(`Feed ${sourceDomain} timed out`);
         }
-        return [];
+        throw error;
   } finally {
         clearTimeout(timeout);
   }

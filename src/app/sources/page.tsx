@@ -7,10 +7,18 @@ export const dynamic = 'force-dynamic';
 export default async function SourcesPage() {
   const supabase = createServiceClient();
 
-  const { data: sources } = await supabase
+  const { data: sources, error } = await supabase
     .from('sources')
     .select('*')
     .order('created_at', { ascending: true });
+
+  if (error) {
+    return (
+      <div className="p-8 text-red-600">
+        Error cargando fuentes desde Supabase: {error.message}
+      </div>
+    );
+  }
 
   const { data: latestArticles } = await supabase
     .from('articles')

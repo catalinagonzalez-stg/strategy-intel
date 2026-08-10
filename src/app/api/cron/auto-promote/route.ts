@@ -65,6 +65,9 @@ export async function POST(request: Request) {
                                     const topClass = classifications[0];
                                     if (!topClass.is_weekly_eligible) continue;
 
+                    // Future-dated items (event pages, misparsed dates) are not news
+                    if (article.published_at && new Date(article.published_at).getTime() > Date.now() + 24 * 60 * 60 * 1000) continue;
+
                     const region = topClass.region;
                                     const score = topClass.relevance_score;
                                     const topics = topClass.topics || [];

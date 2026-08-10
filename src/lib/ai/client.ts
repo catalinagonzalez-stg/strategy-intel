@@ -1,5 +1,9 @@
 import OpenAI from 'openai';
 
+// Single source of truth for the model used across the pipeline —
+// also recorded as classification_model provenance in Supabase.
+export const DEFAULT_MODEL = 'gpt-4o';
+
 let _client: OpenAI | null = null;
 
 export function getOpenAIClient(): OpenAI {
@@ -25,7 +29,7 @@ export async function callLLM(opts: {
 }): Promise<string> {
   const client = getOpenAIClient();
   const response = await client.chat.completions.create({
-    model: opts.model || 'gpt-4o',
+    model: opts.model || DEFAULT_MODEL,
     max_tokens: opts.maxTokens || 4096,
     messages: [
       { role: 'system', content: opts.system },

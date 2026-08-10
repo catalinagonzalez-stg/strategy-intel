@@ -85,9 +85,23 @@ function buildSearchQuery(sourceName: string, sourceUrl: string | null): string 
   return cleanName + ' fintech pagos';
 }
 
+// Google country (gl) / language (hl) per source, so LATAM queries don't run
+// against the US/English Google News defaults.
+function getSerperLocale(sourceName: string): { gl?: string; hl?: string } {
+  const CL = ['(CL)', 'Chile', 'La Tercera', 'Diario Financiero', 'CMF', 'FNE', 'Banco Central Chile', 'Khipu', 'Toku', 'Etpay', 'Transbank', 'Klap', 'leaders_CL'];
+  const MX = ['(MX', 'México', 'Mexico', 'CNBV', 'Banxico', 'El Economista', 'Conekta', 'Clip', 'Kushki', 'leaders_MX'];
+  const BR = ['(BR)', 'EBANX'];
+  const LATAM = ['LATAM', 'latam', 'Bloomberg Linea', 'Contxto', 'dLocal', 'Mercado Pago', 'Belvo', 'Prometeo', 'infra_pagos', 'regulacion', 'fintech_latam'];
+  if (CL.some(k => sourceName.includes(k))) return { gl: 'cl', hl: 'es' };
+  if (MX.some(k => sourceName.includes(k))) return { gl: 'mx', hl: 'es' };
+  if (BR.some(k => sourceName.includes(k))) return { gl: 'br', hl: 'pt' };
+  if (LATAM.some(k => sourceName.includes(k))) return { hl: 'es' };
+  return {};
+}
+
 export async function fetchSerperNews(sourceName: string, sourceUrl: string | null): Promise<ParsedEntry[]> {
   const apiKey = process.env.SERPER_API_KEY;
-  if (!apiKey) { console.warn('[serper] SERPER_API_KEY not configured'); return []; }
+  if (!apiKey) throw new Error('SERPER_API_KEY not configured');
   const query = buildSearchQuery(sourceName, sourceUrl);
   console.log('[serper] Searching for "' + query + '" (source: ' + sourceName + ')');
   const controller = new AbortController();
@@ -96,10 +110,13 @@ export async function fetchSerperNews(sourceName: string, sourceUrl: string | nu
     const response = await fetch('https://google.serper.dev/news', {
       method: 'POST',
       headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: query, num: 10, tbs: 'qdr:w' }),
+      body: JSON.stringify({ q: query, num: 10, tbs: 'qdr:w', ...getSerperLocale(sourceName) }),
       signal: controller.signal,
     });
-    if (!response.ok) { console.warn('[serper] API returned ' + response.status); return []; }
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error('Serper API returned ' + response.status + (body ? ': ' + body.substring(0, 200) : ''));
+    }
     const data: SerperResponse = await response.json();
     const results = data.news || [];
     console.log('[serper] Got ' + results.length + ' results for "' + sourceName + '"');
@@ -114,8 +131,7 @@ export async function fetchSerperNews(sourceName: string, sourceUrl: string | nu
       };
     });
   } catch (error) {
-    if ((error as Error).name === 'AbortError') { console.warn('[serper] Request timed out for "' + sourceName + '"'); }
-    else { console.error('[serper] Error searching for "' + sourceName + '":', error); }
-    return [];
+    if ((error as Error).name === 'AbortError') throw new Error('Serper request timed out for "' + sourceName + '"');
+    throw error;
   } finally { clearTimeout(timeout); }
 }
