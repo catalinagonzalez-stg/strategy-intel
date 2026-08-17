@@ -111,7 +111,9 @@ export async function POST(request: Request) {
   }
 
   const slackToken = process.env.SLACK_BOT_TOKEN;
-      const channelId = process.env.SLACK_CHANNEL_ID;
+      // Newsletter destination: dedicated env var (e.g. a DM) with fallback to the
+      // general channel ID. SLACK_CHANNEL_ID is still used by the slack ingest source.
+      const channelId = process.env.SLACK_NEWSLETTER_CHANNEL_ID || process.env.SLACK_CHANNEL_ID;
       if (!slackToken || !channelId) {
               return NextResponse.json({ error: 'Slack not configured' }, { status: 500 });
       }
