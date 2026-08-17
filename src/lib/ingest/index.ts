@@ -12,6 +12,9 @@ interface Source {
   url: string | null;
 }
 
+// Outlets we never want in the pipeline, in any ingestion path.
+const BLOCKED_DOMAINS = ['theclinic.cl'];
+
 interface IngestResult {
   source_id: string;
   source_name: string;
@@ -69,6 +72,10 @@ async function ingestSource(source: Source): Promise<IngestResult> {
   const validEntries = entries.filter(e => {
     if (e.url && e.url.includes('/event-info/')) return false;
     if (e.published_at && new Date(e.published_at).getTime() > maxPublishedAt) return false;
+    // Blocked domains: never ingest from these outlets regardless of how they arrive
+    // (direct RSS, Google News search, or Slack-shared links).
+    const haystack = `${e.source_domain || ''} ${e.url || ''}`.toLowerCase();
+    if (BLOCKED_DOMAINS.some(d => haystack.includes(d))) return false;
     return true;
   });
   if (validEntries.length < entries.length) {
