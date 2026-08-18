@@ -29,7 +29,7 @@ const SECTIONS = FINTOC_CONTEXT.newsletter.sections
   .map(s => `- "${s.id}": ${s.name} — ${s.description}`)
   .join('\n');
 
-const SYSTEM_PROMPT = `Eres el editor de "Strategy Intel Weekly", un briefing semanal de inteligencia de mercado para una fintech de pagos en Chile y Mexico.
+const SYSTEM_PROMPT = `Eres el editor de "Strategy Intel Daily", un briefing diario de inteligencia de mercado para una fintech de pagos en Chile y Mexico.
 
 ${getFintocContextPrompt()}
 
@@ -71,8 +71,8 @@ JSON valido (sin markdown, sin backticks):
 
 content_md:
 
-# Strategy Intel Weekly — [Titular]
-_Semana del [fecha]_
+# Strategy Intel Daily — [Titular]
+_[fecha]_
 
 ## [Tema 1: titulo factual con dato]
 [Parrafo de 3-5 lineas reportando QUE PASO. Incluir: quien, que, cuando, cuanto, donde. Solo hechos verificables con cifras.]
@@ -90,8 +90,8 @@ _Strategy Intel — Fintoc | [N] fuentes_
 
 content_slack (max 3800 chars, mrkdwn de Slack):
 
-:newspaper: *Strategy Intel Weekly*
-_Semana del [fecha]_
+:newspaper: *Strategy Intel Daily*
+_[fecha]_
 ━━━━━━━━━━━━━━━━━━━━
 
 *TL;DR:*
@@ -125,9 +125,9 @@ export interface NewsletterContext {
 export async function generateNewsletter(signals: SignalForNewsletter[], context?: NewsletterContext): Promise<NewsletterContent> {
   if (signals.length === 0) {
     return {
-      tema_semana: 'Sin signals esta semana',
-      content_md: '# Strategy Intel Weekly\n\nNo hay signals suficientes para generar el newsletter esta semana.',
-      content_slack: '*Strategy Intel Weekly*\nNo hay signals suficientes para generar el newsletter esta semana.',
+      tema_semana: 'Sin signals hoy',
+      content_md: '# Strategy Intel Daily\n\nNo hay signals suficientes para generar el briefing de hoy.',
+      content_slack: '*Strategy Intel Daily*\nNo hay signals suficientes para generar el briefing de hoy.',
       section_assignments: [],
     };
   }
@@ -143,9 +143,7 @@ Signal ${i + 1} (id: ${s.id}):
 `).join('\n');
 
   const today = new Date();
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
-  const dateStr = weekStart.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+  const dateStr = today.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
 
   // Build context sections for deduplication and hot topics
   let contextBlock = '';
@@ -156,7 +154,7 @@ Signal ${i + 1} (id: ${s.id}):
     contextBlock += `\nTEMAS HOT EN FINTOC (priorizar si hay signals relacionadas):\n${context.hotTopics.map((t, i) => `- ${t}`).join('\n')}\n`;
   }
 
-  const userMessage = `Semana del ${dateStr}. ${signals.length} signals disponibles.
+  const userMessage = `Briefing del ${dateStr}. ${signals.length} signals disponibles.
 ${contextBlock}
 PASO 1 — FILTRA: Lee todas las signals. Descarta las que no tienen datos duros (USD, %, cantidad). Descarta low_evidence=true. Descarta POS/NFC/terminales fisicos.
 
@@ -189,7 +187,7 @@ ${signalsSummary}`;
       const parsed = JSON.parse(cleaned);
 
       lastContent = {
-        tema_semana: String(parsed.tema_semana || 'Newsletter Semanal'),
+        tema_semana: String(parsed.tema_semana || 'Strategy Intel Daily'),
         content_md: String(parsed.content_md || ''),
         content_slack: String(parsed.content_slack || '').substring(0, 3900),
         section_assignments: Array.isArray(parsed.section_assignments)
@@ -219,9 +217,9 @@ ${signalsSummary}`;
       lastViolations = ['JSON parse error — responde SOLO con JSON valido'];
       if (attempt === MAX_RETRIES) {
         return {
-          tema_semana: 'Newsletter Semanal',
+          tema_semana: 'Strategy Intel Daily',
           content_md: response.length > 100 ? response : 'Error al generar newsletter.',
-          content_slack: '*Strategy Intel Weekly*\nError al generar el newsletter. Revise los logs.',
+          content_slack: '*Strategy Intel Daily*\nError al generar el newsletter. Revise los logs.',
           section_assignments: [],
         };
       }
@@ -231,9 +229,9 @@ ${signalsSummary}`;
   // If we exhausted retries, return last content with warnings
   console.warn(`[newsletter] Exhausted ${MAX_RETRIES} retries. Returning last attempt with violations: ${lastViolations.join('; ')}`);
   return lastContent || {
-    tema_semana: 'Newsletter Semanal',
+    tema_semana: 'Strategy Intel Daily',
     content_md: 'Error: no se pudo generar un newsletter que pase validacion.',
-    content_slack: '*Strategy Intel Weekly*\nError al generar. Revise los logs.',
+    content_slack: '*Strategy Intel Daily*\nError al generar. Revise los logs.',
     section_assignments: [],
   };
 }
@@ -292,7 +290,7 @@ function checkContentViolations(content: NewsletterContent): string[] {
 
   // 6. Fintoc mentioned in body (not footer)
   const bodyText = allText.split('Strategy Intel — Fintoc')[0] || allText;
-  const fintocInBody = bodyText.replace(/Strategy Intel Weekly/g, '').replace(/Strategy Intel — Fintoc/g, '');
+  const fintocInBody = bodyText.replace(/Strategy Intel (Weekly|Daily)/g, '').replace(/Strategy Intel — Fintoc/g, '');
   if (/\bFintoc\b/i.test(fintocInBody)) {
     violations.push('No menciones "Fintoc" en el cuerpo del newsletter. Solo aparece en el footer.');
   }
