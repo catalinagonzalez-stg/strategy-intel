@@ -4,6 +4,7 @@ import { fetchSerperNews } from './serper';
 import { fetchSlackLinks } from './slack';
 import { classifyArticle } from '@/lib/ai/classify';
 import { DEFAULT_MODEL } from '@/lib/ai/client';
+import { isGoogleNewsUrl, resolveGoogleNewsUrl } from './resolve-gnews';
 
 interface Source {
   id: string;
@@ -103,6 +104,21 @@ async function ingestSource(source: Source): Promise<IngestResult> {
   }
 
   console.log(`[ingest] ${source.name}: ${entries.length} entries, ${newEntries.length} new`);
+
+  // Resolve Google News redirect links to the real outlet URL for NEW entries
+  // only (content_hash stays based on the original link, so dedup is stable).
+  // Best-effort: on failure the Google link is kept.
+  for (const entry of newEntries) {
+    if (!isGoogleNewsUrl(entry.url)) continue;
+    const resolved = await resolveGoogleNewsUrl(entry.url);
+    if (resolved) {
+      entry.url = resolved;
+      try { entry.source_domain = new URL(resolved).hostname.replace(/^www\./, ''); } catch { /* keep */ }
+    } else {
+      console.warn(`[ingest] Could not resolve Google News URL for "${entry.title}"`);
+    }
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
 
   // 3. Insert new articles and classify them
   for (const entry of newEntries) {
