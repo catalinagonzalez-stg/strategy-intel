@@ -38,6 +38,24 @@ export async function POST() {
 
     console.log(`[generate-newsletter] Found ${signals.length} unassigned signals`);
 
+    // 1.5. Guard: don't generate a second edition the same day (e.g. when the
+    // GitHub Actions cron fires late and a backup trigger already ran)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const { data: todayEditions } = await supabase
+      .from('newsletter_editions')
+      .select('id, status')
+      .eq('edition_date', todayStr)
+      .in('status', ['validated', 'sent']);
+
+    if (todayEditions && todayEditions.length > 0) {
+      return NextResponse.json({
+        ok: true,
+        message: `An edition for ${todayStr} already exists (${todayEditions[0].status}). Skipping.`,
+        edition_id: null,
+        skipped: true,
+      });
+    }
+
     // 2. Get next edition number
     const { data: lastEdition } = await supabase
       .from('newsletter_editions')
@@ -70,17 +88,22 @@ export async function POST() {
     try {
       const { data: recentEditions } = await supabase
         .from('newsletter_editions')
-        .select('tema_semana, edition_date')
+        .select('tema_semana, content_md, edition_date')
         .in('status', ['validated', 'sent'])
         .order('edition_date', { ascending: false })
-        .limit(4);
+        .limit(7);
 
       if (recentEditions && recentEditions.length > 0) {
-        const topics = recentEditions
-          .map((e: any) => `${e.edition_date}: ${e.tema_semana}`)
-          .filter((t: string) => t.length > 10);
-        newsletterContext.recentTopics = topics;
-        console.log(`[generate-newsletter] Found ${topics.length} recent topics for dedup`);
+        // Individual topic titles (## headers) from recent editions, not just
+        // the edition headline — this is what the repetition check compares.
+        const topics: string[] = [];
+        for (const e of recentEditions as any[]) {
+          if (e.tema_semana && e.tema_semana.length > 10) topics.push(e.tema_semana);
+          const headers = (e.content_md?.match(/^## .+/gm) || []) as string[];
+          for (const h of headers) topics.push(h.replace('## ', ''));
+        }
+        newsletterContext.recentTopics = [...new Set(topics)];
+        console.log(`[generate-newsletter] Found ${newsletterContext.recentTopics.length} recent topics for dedup`);
       }
     } catch (err) {
       console.warn('[generate-newsletter] Could not fetch recent topics:', err);
@@ -90,7 +113,10 @@ export async function POST() {
     const newsletterContent = await generateNewsletter(signals, newsletterContext);
 
     // 5. Validate
-    const validation = validateNewsletter(newsletterContent, signals.length);
+    const validation = validateNewsletter(newsletterContent, signals.length, {
+      allowedUrls: signals.map((s: any) => s.supporting_url).filter(Boolean),
+      recentTopics: newsletterContext.recentTopics,
+    });
 
     // 6. Insert newsletter_items for section assignments
     // The LLM may return signal_ids that don't exactly match (truncated, etc.)
