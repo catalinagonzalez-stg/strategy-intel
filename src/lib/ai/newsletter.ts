@@ -58,6 +58,8 @@ REGLA DE DATOS: sin al menos 1 cifra concreta, NO es tema.
 REGLA DE DIVERSIDAD: cada tema es una historia distinta. No 3 temas del mismo pais o misma tematica. Mezcla: regulacion + competencia + deal.
 REGLA TL;DR: solo hechos y datos, no interpretacion. "Nu Mexico llega a 15M usuarios" SI. "Nu Mexico impacta el open banking" NO.
 REGLA FUENTES: cada tema incluye link a la fuente.
+REGLA URLS: copia la URL EXACTAMENTE como aparece en el campo "Fuente" de la signal, caracter por caracter. NUNCA inventes, acortes, traduzcas ni "mejores" una URL. Una URL que no venga textual de una signal invalida el newsletter completo.
+REGLA NO REPETIR: si un tema ya aparecio en una edicion reciente (misma noticia, mismo acuerdo, misma empresa haciendo lo mismo), NO lo incluyas de nuevo aunque venga en una signal nueva. Solo se repite si hay un desarrollo NUEVO y distinto (cifra nueva, etapa nueva, decision nueva).
 
 ═══ FORMATO ═══
 
@@ -166,6 +168,10 @@ RECUERDA: Eres periodista, no consultor. Solo reportas hechos.
 
 ${signalsSummary}`;
 
+  // URLs the LLM is allowed to use: exactly the signals' source URLs
+  const allowedUrls = signals.map(s => s.supporting_url).filter(Boolean);
+  const checkOpts = { allowedUrls, recentTopics: context?.recentTopics };
+
   // Retry loop: generate, validate, regenerate with feedback up to MAX_RETRIES
   const MAX_RETRIES = 3;
   let lastContent: NewsletterContent | null = null;
@@ -200,7 +206,7 @@ ${signalsSummary}`;
       };
 
       // Run content quality checks
-      const violations = checkContentViolations(lastContent);
+      const violations = checkContentViolations(lastContent, checkOpts);
       if (violations.length === 0) {
         console.log(`[newsletter] Passed validation on attempt ${attempt}`);
         return lastContent;
@@ -240,10 +246,52 @@ ${signalsSummary}`;
  * Check content for rule violations that require regeneration.
  * Returns array of violation descriptions. Empty = passed.
  */
-function checkContentViolations(content: NewsletterContent): string[] {
+interface CheckOpts {
+  allowedUrls?: string[];
+  recentTopics?: string[];
+}
+
+// Tokenize a topic title into distinctive words for repetition detection.
+function distinctiveWords(title: string): Set<string> {
+  const STOP = new Set(['para', 'por', 'con', 'del', 'las', 'los', 'una', 'uno', 'que', 'como', 'entre', 'hacia', 'sobre', 'tras', 'ante', 'mediante', 'nuevo', 'nueva', 'chile', 'mexico', 'méxico', 'fintech', 'pago', 'pagos', 'millones', 'millón', 'millon', 'clientes', 'cliente', 'usuarios', 'usuario', 'anuncia', 'firma', 'lanza', 'desde', 'hasta', 'este', 'esta', 'más', 'mas', 'sus']);
+  const norm = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const words = norm.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+    .map(w => w.replace(/s$/, ''))
+    .filter(w => w.length >= 3 && !/^\d+$/.test(w) && !STOP.has(w) && !STOP.has(w + 's'));
+  return new Set(words);
+}
+
+function checkContentViolations(content: NewsletterContent, opts?: CheckOpts): string[] {
   const violations: string[] = [];
   const allText = `${content.content_md} ${content.content_slack}`;
   const allTextLower = allText.toLowerCase();
+
+  // 0a. URL integrity — every URL in the output must be one of the signals' URLs
+  if (opts?.allowedUrls && opts.allowedUrls.length > 0) {
+    const allowed = new Set(opts.allowedUrls.map(u => u.replace(/[>).,]+$/, '')));
+    const foundUrls = (allText.match(/https?:\/\/[^\s)|>"'\]]+/g) || [])
+      .map(u => u.replace(/[>).,]+$/, ''));
+    const invented = [...new Set(foundUrls.filter(u => !allowed.has(u)))];
+    if (invented.length > 0) {
+      violations.push(`URLs inventadas o modificadas (${invented.length}): ${invented.slice(0, 3).join(' ; ')}. PROHIBIDO inventar URLs — copia la URL EXACTA del campo Fuente de la signal, caracter por caracter.`);
+    }
+  }
+
+  // 0b. Repetition vs recent editions — same story must not run twice
+  if (opts?.recentTopics && opts.recentTopics.length > 0) {
+    const newTitles = (content.content_md.match(/^## .+/gm) || []).map(t => t.replace('## ', ''));
+    const recentSets = opts.recentTopics.map(t => ({ title: t, words: distinctiveWords(t) }));
+    for (const title of newTitles) {
+      const words = distinctiveWords(title);
+      for (const recent of recentSets) {
+        const shared = [...words].filter(w => recent.words.has(w));
+        if (shared.length >= 2) {
+          violations.push(`Tema repetido: "${title}" ya salio en una edicion reciente ("${recent.title}"). ELIMINALO y elige otra signal — solo repite una historia si hay un desarrollo nuevo con cifra o etapa distinta.`);
+          break;
+        }
+      }
+    }
+  }
 
   // 1. Prescriptive / recommendation language — this is a FACTUAL briefing, no opinions
   const prescriptive = allText.match(/\b(necesitamos|debemos|tenemos que|hay que|nos obliga a|exige que|es crucial|sera clave|es necesario|es fundamental|necesidad de|es imperativo|es urgente que|mover ficha|apuntalar|deberiamos|recomendamos|conviene que)\b/gi);
@@ -288,8 +336,11 @@ function checkContentViolations(content: NewsletterContent): string[] {
     violations.push(`Mencion de productos Fintoc: "${productMentions.slice(0, 2).join('", "')}". Este briefing NO conecta noticias con nuestros productos — solo reporta hechos.`);
   }
 
-  // 6. Fintoc mentioned in body (not footer)
-  const bodyText = allText.split('Strategy Intel — Fintoc')[0] || allText;
+  // 6. Fintoc mentioned in body (not footer) — strip the footer from each
+  // version separately (before, splitting the combined text at the md footer
+  // let the whole Slack version escape the check)
+  const stripFooter = (t: string) => t.split('Strategy Intel — Fintoc')[0] || t;
+  const bodyText = `${stripFooter(content.content_md)} ${stripFooter(content.content_slack)}`;
   const fintocInBody = bodyText.replace(/Strategy Intel (Weekly|Daily)/g, '').replace(/Strategy Intel — Fintoc/g, '');
   if (/\bFintoc\b/i.test(fintocInBody)) {
     violations.push('No menciones "Fintoc" en el cuerpo del newsletter. Solo aparece en el footer.');
@@ -308,7 +359,7 @@ function checkContentViolations(content: NewsletterContent): string[] {
 /**
  * Validate newsletter content against Fintoc's rules
  */
-export function validateNewsletter(content: NewsletterContent, signalCount: number): {
+export function validateNewsletter(content: NewsletterContent, signalCount: number, opts?: CheckOpts): {
   valid: boolean;
   checks: Array<{ id: string; pass: boolean; level: 'fail' | 'warn'; detail: string }>;
   errors: string[];
@@ -333,7 +384,7 @@ export function validateNewsletter(content: NewsletterContent, signalCount: numb
   if (!hasTopics) errors.push(`Minimo ${minTopics} temas desarrollados requeridos`);
 
   // Check for content violations (prescriptive, buzzwords, wrong mapping)
-  const contentViolations = checkContentViolations(content);
+  const contentViolations = checkContentViolations(content, opts);
   const noViolations = contentViolations.length === 0;
   checks.push({
     id: 'content_quality',
